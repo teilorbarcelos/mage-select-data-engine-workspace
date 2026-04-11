@@ -25,6 +25,7 @@ export interface PrismaModel<T> {
     skip?: number;
     where?: Record<string, unknown>;
     orderBy?: Record<string, 'asc' | 'desc'> | Array<Record<string, 'asc' | 'desc'>>;
+    select?: Record<string, boolean>;
   }): Promise<T[]>;
   count(args?: { where?: Record<string, unknown> }): Promise<number>;
 }
@@ -36,12 +37,18 @@ export async function handlePrismaMageRequest<T>(
     pageSize?: number;
     orderBy?: Record<string, 'asc' | 'desc'> | Array<Record<string, 'asc' | 'desc'>>;
     where?: Record<string, unknown>;
+    select?: Record<string, boolean>;
+    searchColumns?: string[];
   } = {}
 ) {
   const page = Math.max(1, typeof query.page === 'string' ? parseInt(query.page) : (typeof query.page === 'number' ? query.page : 1));
   const pageSize = options.pageSize || (typeof query.pageSize === 'string' ? parseInt(query.pageSize) : (typeof query.pageSize === 'number' ? query.pageSize : 50));
   const search = typeof query.search === 'string' ? query.search : undefined;
-  const columns = typeof query.columns === 'string' ? query.columns.split(',').filter(Boolean) : [];
+  
+  // Use columns from query OR searchColumns from options
+  const columns = typeof query.columns === 'string' 
+    ? query.columns.split(',').filter(Boolean) 
+    : (options.searchColumns || []);
 
   const sort = typeof query.sort === 'string' ? query.sort : undefined;
   const order = (query.order === 'asc' || query.order === 'desc') ? query.order : 'asc';
@@ -75,6 +82,7 @@ export async function handlePrismaMageRequest<T>(
     take: pageSize + 1,
     skip: (page - 1) * pageSize,
     orderBy,
+    select: options.select,
   });
 
   let hasMore = false;

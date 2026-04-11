@@ -12,7 +12,7 @@ export interface MageSelectViewProps<T> {
   placeholder?: string;
   multiple?: boolean;
   invalid?: boolean;
-  error?: { message?: string };
+  error?: string | { message?: string };
   name?: string;
   onBlur?: () => void;
   fieldRef?: React.Ref<any>;
@@ -36,8 +36,11 @@ export function MageSelectView<T>({
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLLIElement>(null);
 
-  const { items, selectedItems, isLoading, isHydrating, hasMore } = state;
+  const { items, selectedItems, isLoading, isHydrating, hasMore, error: stateError } = state;
+  const displayError = error || stateError;
+  const errorMessage = typeof displayError === 'string' ? displayError : displayError?.message;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -55,6 +58,32 @@ export function MageSelectView<T>({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen, onBlur, setSearch, setSearchTerm]);
+
+  // Infinite Scroll Observer
+  useEffect(() => {
+    if (!isOpen || !hasMore || isLoading) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        loadMore();
+      }
+    }, {
+      root: containerRef.current?.querySelector('.mage-select-dropdown'),
+      threshold: 0.1,
+    });
+
+    const currentSentinel = loadMoreRef.current;
+    if (currentSentinel) {
+      observer.observe(currentSentinel);
+    }
+
+    return () => {
+      if (currentSentinel) {
+        observer.unobserve(currentSentinel);
+      }
+      observer.disconnect();
+    };
+  }, [isOpen, hasMore, isLoading, loadMore]);
 
   const handleSearchChange = (term: string) => {
     setSearchTerm(term);
@@ -110,8 +139,8 @@ export function MageSelectView<T>({
         </div>
       )}
 
-      {error && (
-        <div className="mage-select-error-message">{error.message}</div>
+      {errorMessage && (
+        <div className="mage-select-error-message">{errorMessage}</div>
       )}
 
       {isOpen && (
@@ -134,17 +163,12 @@ export function MageSelectView<T>({
               </li>
             ))}
             {hasMore && (
-              <li className="mage-select-load-more">
-                <button 
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    loadMore();
-                  }} 
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Loading...' : 'Load more'}
-                </button>
+              <li 
+                ref={loadMoreRef} 
+                className="mage-select-load-more"
+                style={{ height: '10px', margin: '5px 0' }}
+              >
+                {isLoading && <div className="spinner-mini" style={{ margin: '0 auto' }} />}
               </li>
             )}
             {!isLoading && items.length === 0 && (

@@ -32,7 +32,7 @@
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts --clean",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
-    "test": "echo \"No tests yet\""
+    "test": "vitest run"
   },
   "peerDependencies": {
     "react": "^18.2.0",

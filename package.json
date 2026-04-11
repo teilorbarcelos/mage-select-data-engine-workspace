@@ -5,11 +5,18 @@
     "build": "turbo run build",
     "dev": "node scripts/dev.js",
     "lint": "turbo run lint",
-    "test": "turbo run test"
+    "test:turbo": "turbo run test",
+    "test": "vitest run"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^2.1.9",
+    "happy-dom": "^20.8.9",
     "turbo": "^1.13.0",
     "typescript": "^5.4.0",
-    "@types/node": "^20.0.0"
+    "vitest": "^2.1.9"
   }
 }

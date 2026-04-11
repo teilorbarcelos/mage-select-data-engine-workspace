@@ -1,0 +1,139 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { MageSelectEngine } from '../index';
+
+interface TestItem {
+  id: string;
+  name?: string;
+}
+
+describe('MageSelectEngine', () => {
+  const mockFetchPage = vi.fn();
+  const mockIdGetter = (item: TestItem) => item.id;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should initialize with default state', () => {
+    const engine = new MageSelectEngine({
+      fetchPage: mockFetchPage,
+      fetchByIds: vi.fn(),
+      getId: mockIdGetter,
+    });
+
+    const state = engine.getState();
+    expect(state.items).toEqual([]);
+    expect(state.isLoading).toBe(false);
+    expect(state.search).toBe('');
+    expect(state.page).toBe(1);
+  });
+
+  it('should perform initial load correctly', async () => {
+    const mockData = {
+      items: [{ id: '1', name: 'Item 1' }],
+      hasMore: false,
+    };
+    mockFetchPage.mockResolvedValue(mockData);
+
+    const engine = new MageSelectEngine({
+      fetchPage: mockFetchPage,
+      fetchByIds: vi.fn(),
+      getId: mockIdGetter,
+    });
+
+    const promise = engine.initialLoad();
+    expect(engine.getState().isLoading).toBe(true);
+    
+    await promise;
+
+    const state = engine.getState();
+    expect(state.items).toEqual(mockData.items);
+    expect(state.isLoading).toBe(false);
+    expect(mockFetchPage).toHaveBeenCalledWith(1, '');
+  });
+
+  it('should reset page and items when searching', async () => {
+    const engine = new MageSelectEngine({
+      fetchPage: mockFetchPage,
+      fetchByIds: vi.fn(),
+      getId: mockIdGetter,
+    });
+
+    mockFetchPage.mockResolvedValue({ items: [], hasMore: false });
+
+    await engine.setSearch('test');
+    
+    expect(engine.getState().search).toBe('test');
+    expect(engine.getState().page).toBe(1);
+    expect(mockFetchPage).toHaveBeenCalledWith(1, 'test');
+  });
+
+  it('should load more items correctly', async () => {
+    const engine = new MageSelectEngine({
+      fetchPage: mockFetchPage,
+      fetchByIds: vi.fn(),
+      getId: mockIdGetter,
+    });
+
+    // Initial load
+    mockFetchPage.mockResolvedValueOnce({ items: [{ id: '1' }], hasMore: true });
+    await engine.initialLoad();
+
+    // Load more
+    mockFetchPage.mockResolvedValueOnce({ items: [{ id: '2' }], hasMore: false });
+    await engine.loadMore();
+
+    const state = engine.getState();
+    expect(state.items).toHaveLength(2);
+    expect(state.page).toBe(2);
+    expect(state.hasMore).toBe(false);
+  });
+
+  it('should manage selections correctly', () => {
+    const engine = new MageSelectEngine({
+      fetchPage: mockFetchPage,
+      fetchByIds: vi.fn(),
+      getId: mockIdGetter,
+    });
+
+    const item = { id: '1', name: 'Selected' };
+    engine.toggleSelection(item);
+    
+    expect(engine.getState().selectedItems).toContain(item);
+    
+    engine.toggleSelection(item);
+    expect(engine.getState().selectedItems).not.toContain(item);
+  });
+
+  it('should handle fetchPage errors', async () => {
+    const errorMsg = 'Network Error';
+    mockFetchPage.mockRejectedValue(new Error(errorMsg));
+    
+    const engine = new MageSelectEngine({
+      fetchPage: mockFetchPage,
+      fetchByIds: vi.fn(),
+      getId: mockIdGetter,
+    });
+
+    await engine.initialLoad();
+    
+    expect(engine.getState().error).toContain(errorMsg);
+    expect(engine.getState().isLoading).toBe(false);
+  });
+
+  it('should handle fetchByIds errors during hydration', async () => {
+    const errorMsg = 'Hydration Failed';
+    const mockFetchByIds = vi.fn().mockRejectedValue(new Error(errorMsg));
+    
+    const engine = new MageSelectEngine({
+      fetchPage: mockFetchPage,
+      fetchByIds: mockFetchByIds,
+      getId: mockIdGetter,
+    });
+    
+    await engine.setValue(['1']);
+    
+    expect(engine.getState().error).toContain(errorMsg);
+    expect(engine.getState().isHydrating).toBe(false);
+  });
+});
