@@ -1,7 +1,7 @@
 # Mage Select Engine 🧙‍♂️
 
 [![npm version](https://img.shields.io/npm/v/mage-select-data-engine.svg?style=flat-square)](https://www.npmjs.com/package/mage-select-data-engine)
-[![license](https://img.shields.io/npm/l/mage-select-data-engine.svg?style=flat-square)](https://github.com/teilorbarcelos/mage-select-data-engine/blob/main/LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/teilorbarcelos/mage-select-data-engine-workspace/blob/main/LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)
 
 **Mage Select** is a suite of professional packages for building robust, high-performance select components. It solves the most complex parts of data-fetching: pagination, search indexing, state management, and entity hydration.

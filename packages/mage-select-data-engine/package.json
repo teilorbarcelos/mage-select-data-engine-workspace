@@ -18,7 +18,8 @@
     "url": "https://github.com/teilorbarcelos/mage-select-data-engine"
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
