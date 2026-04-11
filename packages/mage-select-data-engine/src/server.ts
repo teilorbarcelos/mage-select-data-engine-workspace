@@ -38,7 +38,7 @@ export async function handlePrismaMageRequest<T>(
     orderBy?: Record<string, 'asc' | 'desc'> | Array<Record<string, 'asc' | 'desc'>>;
     where?: Record<string, unknown>;
     select?: Record<string, boolean>;
-    searchColumns?: string[];
+    searchFields?: string | string[];
   } = {}
 ) {
   const page = Math.max(1, typeof query.page === 'string' ? parseInt(query.page) : (typeof query.page === 'number' ? query.page : 1));
@@ -47,7 +47,7 @@ export async function handlePrismaMageRequest<T>(
   
   const columns = typeof query.columns === 'string' 
     ? query.columns.split(',').filter(Boolean) 
-    : (options.searchColumns || []);
+    : (typeof options.searchFields === 'string' ? [options.searchFields] : (options.searchFields || []));
 
   const sort = typeof query.sort === 'string' ? query.sort : undefined;
   const order = (query.order === 'asc' || query.order === 'desc') ? query.order : 'asc';

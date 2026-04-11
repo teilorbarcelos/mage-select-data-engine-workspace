@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { handlePrismaMageRequest, PrismaModel } from '../server';
 
 describe('Server Utilities', () => {
@@ -16,7 +16,7 @@ describe('Server Utilities', () => {
     };
 
     const result = await handlePrismaMageRequest(mockModel, query, {
-      searchColumns: ['name', 'email'],
+      searchFields: ['name', 'email'],
     });
 
     expect(mockModel.findMany).toHaveBeenCalledWith({
@@ -43,15 +43,41 @@ describe('Server Utilities', () => {
       count: vi.fn().mockResolvedValue(0),
     };
 
-    await handlePrismaMageRequest(mockModel, {}, {
-      searchColumns: ['name'],
+    await handlePrismaMageRequest(mockModel, { search: 'test' }, {
+      searchFields: ['name'],
       orderBy: { createdAt: 'desc' },
       select: { id: true, name: true },
     });
 
     expect(mockModel.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        OR: [
+          { name: { contains: 'test' } }
+        ]
+      },
       orderBy: { createdAt: 'desc' },
       select: { id: true, name: true },
+    }));
+  });
+
+  it('should handle search on multiple columns', async () => {
+    const mockModel: PrismaModel<{ id: string; name: string; email: string }> = {
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
+    };
+
+    const query = { search: 'John' };
+    const options = { searchFields: ['name', 'email'] };
+    
+    await handlePrismaMageRequest(mockModel, query, options);
+
+    expect(mockModel.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        OR: [
+          { name: { contains: 'John' } },
+          { email: { contains: 'John' } }
+        ]
+      }
     }));
   });
 });
