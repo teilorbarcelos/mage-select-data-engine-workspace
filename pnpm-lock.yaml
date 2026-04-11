@@ -32,6 +32,9 @@ importers:
       mage-prisma:
         specifier: workspace:*
         version: link:../../prisma
+      mage-select-data-engine:
+        specifier: workspace:*
+        version: link:../../packages/mage-select-data-engine
     devDependencies:
       '@types/cors':
         specifier: ^2.8.17

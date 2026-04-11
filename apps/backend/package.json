@@ -11,7 +11,8 @@
     "@prisma/client": "^5.22.0",
     "cors": "^2.8.5",
     "express": "^4.19.0",
-    "mage-prisma": "workspace:*"
+    "mage-prisma": "workspace:*",
+    "mage-select-data-engine": "workspace:*"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

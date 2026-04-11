@@ -7,7 +7,7 @@ async function main() {
   await prisma.user.deleteMany();
 
   const users = Array.from({ length: 1543 }).map((_, i) => ({
-    name: `User ${i + 1}`,
+    name: `User ${(i + 1).toString().padStart(4, '0')}`,
     email: `user${i + 1}@example.com`,
   }));
 

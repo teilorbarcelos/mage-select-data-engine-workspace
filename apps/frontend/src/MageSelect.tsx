@@ -123,6 +123,7 @@ export function MageSelect<T, TFieldValues extends FieldValues, TName extends Pa
               </li>
             ))}
 
+            {isLoading && (
               <li className="mage-select-loading-spinner">Loading...</li>
             )}
             {!hasMore && items.length > 0 && (

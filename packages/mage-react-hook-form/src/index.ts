@@ -29,12 +29,14 @@ export function useMageSelectController<T, TFieldValues extends FieldValues, TNa
   const { name, control, engineOrConfig, multiple = false } = props;
   
   const {
-    field: { value, onChange, onBlur, ref },
+    field,
     fieldState
   } = useController({
     name,
     control,
   });
+
+  const { value, onChange, onBlur } = field;
 
   const engineHook = useMageSelect(engineOrConfig);
   const { engine, state } = engineHook;
@@ -48,7 +50,7 @@ export function useMageSelectController<T, TFieldValues extends FieldValues, TNa
     }
 
     const valueArray = Array.isArray(value) ? value : [value];
-    const currentSelectedIds = state.selectedItems.map(engine['config'].getId);
+    const currentSelectedIds = state.selectedItems.map(item => engine.getId(item));
     
     const needsHydration = JSON.stringify(valueArray) !== JSON.stringify(currentSelectedIds);
 
@@ -63,7 +65,7 @@ export function useMageSelectController<T, TFieldValues extends FieldValues, TNa
   useEffect(() => {
     if (state.isHydrating || isHydratingRef.current) return;
 
-    const selectedIds = state.selectedItems.map(item => engine['config'].getId(item));
+    const selectedIds = state.selectedItems.map(item => engine.getId(item));
     
     const currentFormArray = Array.isArray(value) ? value : (value !== undefined && value !== null ? [value] : []);
     const changed = JSON.stringify(selectedIds) !== JSON.stringify(currentFormArray);
@@ -84,7 +86,7 @@ export function useMageSelectController<T, TFieldValues extends FieldValues, TNa
     setSearch: engineHook.setSearch,
     toggleSelection: engineHook.toggleSelection,
     setValue: engineHook.setValue,
-    field: { name, value, onChange, onBlur, ref: ref as any },
+    field,
     fieldState,
   };
 }

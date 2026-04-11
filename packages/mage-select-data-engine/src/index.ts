@@ -43,6 +43,10 @@ export class MageSelectEngine<T> {
     return this.state;
   }
 
+  public getId(item: T): string {
+    return this.config.getId(item);
+  }
+
   public subscribe(listener: Listener<T>) {
     this.listeners.add(listener);
     return () => {
