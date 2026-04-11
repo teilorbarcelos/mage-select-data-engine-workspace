@@ -37,8 +37,12 @@ Most select libraries work great with 50 items. But as your application grows (C
 
 ## 🚀 Implementation Guide
 
+Choose the approach that best fits your project:
+
 <details>
-<summary><b>🔥 React Hook Form + Infinite Scroll</b></summary>
+<summary><b>▶ Click to expand: Option 1 - React Hook Form (Recommended)</b></summary>
+<br />
+<p>Handles form state, validation, and automatic ID-to-Object hydration. Perfect for CRUD applications.</p>
 
 ```tsx
 import { useMageSelectController } from 'mage-select-data-react-hook-form';
@@ -49,7 +53,7 @@ function MyUserSelect() {
     control,
     // Mage handles the page increments and search terms for you
     fetchPage: async (page, search) => {
-      return myApi.get(`/users?page=${page}&q=${search}`);
+      return myApi.get(`/users?page=${page}&q=${search}`); // { items: T[], hasMore: boolean }
     },
     fetchByIds: async (ids) => myApi.get(`/users/batch?ids=${ids.join(',')}`),
   });
@@ -57,8 +61,12 @@ function MyUserSelect() {
   return (
     <MySelectView 
       items={state.items}
+      selectedItems={state.selectedItems}
       hasMore={state.hasMore}
-      onLoadMore={loadMore} // Just trigger when the user scrolls!
+      isLoading={state.isLoading || state.isHydrating}
+      onLoadMore={loadMore} 
+      onSelect={toggleSelection}
+      onSearch={setSearch}
     />
   );
 }
@@ -66,16 +74,61 @@ function MyUserSelect() {
 </details>
 
 <details>
-<summary><b>🖥️ Server-Side (Prisma/Node)</b></summary>
-<p>Coordinate pagination on the backend with one utility.</p>
+<summary><b>▶ Click to expand: Option 2 - Vanilla React (Total Control)</b></summary>
+<br />
+<p>Low-level state management for custom UI components without dependency on form libraries.</p>
+
+```tsx
+import { useMageSelect } from 'mage-select-data-react';
+
+function CustomSelect() {
+  const { state, toggleSelection, setSearch, loadMore } = useMageSelect({
+    fetchPage: (p, s) => myApi.list(p, s),
+    fetchByIds: (ids) => myApi.getByIds(ids),
+    initialSelectedIds: ['123'], // Will hydrate '123' automatically
+  });
+
+  return (
+    <div>
+      <input 
+        placeholder="Search..." 
+        onChange={(e) => setSearch(e.target.value)} 
+      />
+      
+      <ul className="scrollable-container" onScroll={handleScroll}>
+        {state.items.map(item => (
+          <li key={item.id} onClick={() => toggleSelection(item)}>
+            {item.name} {state.selectedItems.some(i => i.id === item.id) && '✓'}
+          </li>
+        ))}
+        
+        {state.hasMore && (
+          <button onClick={loadMore} disabled={state.isLoading}>
+            {state.isLoading ? 'Loading...' : 'Load More'}
+          </button>
+        )}
+      </ul>
+    </div>
+  );
+}
+```
+</details>
+
+<details>
+<summary><b>▶ Click to expand: Option 3 - Server-Side (Node/Prisma)</b></summary>
+<br />
+<p>Coordinate pagination and search on the backend with one utility.</p>
 
 ```typescript
 import { handlePrismaMageRequest } from 'mage-select-data-engine/server';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
+  
+  // Handles pagination and search parameters across multiple fields automatically
   return handlePrismaMageRequest(prisma.user, searchParams, {
-    searchField: 'name'
+    searchFields: ['name', 'email'], // Multiple fields support!
+    include: { profile: true }
   });
 }
 ```
