@@ -11,6 +11,7 @@
     "quality-check": "pnpm check-any && pnpm check-comments",
     "check-any": "! grep -rE '(: any|as any|<any>|any\\[\\])' packages apps --exclude-dir=node_modules --exclude-dir=dist",
     "check-comments": "! grep -r '^[[:space:]]*//' packages apps --exclude-dir=node_modules --exclude-dir=dist --exclude='*.md' | grep -v '///'",
+    "release": "pnpm build && pnpm -r publish --access public --no-git-checks",
     "prepare": "husky install"
   },
   "devDependencies": {
