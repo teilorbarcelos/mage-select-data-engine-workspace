@@ -1,6 +1,23 @@
 {
-  "name": "mage-react-hook-form",
+  "name": "mage-select-data-react-hook-form",
   "version": "1.0.0",
+  "description": "React Hook Form integration for mage-select-data-engine. Effortless form synchronization and hydration.",
+  "keywords": [
+    "react-hook-form",
+    "select",
+    "form-validation",
+    "hydration",
+    "mage-select"
+  ],
+  "author": "Teilor Barcelos",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/teilorbarcelos/mage-select-data-engine"
+  },
+  "files": [
+    "dist"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -19,8 +36,8 @@
   "peerDependencies": {
     "react": "^18.2.0",
     "react-hook-form": "^7.51.0",
-    "mage-select-data-engine": "workspace:*",
-    "mage-react": "workspace:*"
+    "mage-select-data-engine": "^1.0.0",
+    "mage-select-data-react": "^1.0.0"
   },
   "devDependencies": {
     "react": "^18.2.0",
@@ -29,6 +46,6 @@
     "tsup": "^8.0.2",
     "typescript": "^5.4.0",
     "mage-select-data-engine": "workspace:*",
-    "mage-react": "workspace:*"
+    "mage-select-data-react": "workspace:*"
   }
 }

@@ -19,13 +19,23 @@ export interface MageHydrationRequest {
  * @param options - Optional overrides
  * @returns Standardized { items, hasMore } response
  */
+export interface PrismaModel<T> {
+  findMany(args: {
+    take?: number;
+    skip?: number;
+    where?: Record<string, unknown>;
+    orderBy?: Record<string, 'asc' | 'desc'> | Array<Record<string, 'asc' | 'desc'>>;
+  }): Promise<T[]>;
+  count(args?: { where?: Record<string, unknown> }): Promise<number>;
+}
+
 export async function handlePrismaMageRequest<T>(
-  prismaModel: any,
+  prismaModel: PrismaModel<T>,
   query: MageServerRequest,
   options: {
     pageSize?: number;
-    orderBy?: any;
-    where?: any;
+    orderBy?: Record<string, 'asc' | 'desc'> | Array<Record<string, 'asc' | 'desc'>>;
+    where?: Record<string, unknown>;
   } = {}
 ) {
   const page = Math.max(1, typeof query.page === 'string' ? parseInt(query.page) : (typeof query.page === 'number' ? query.page : 1));
@@ -56,7 +66,9 @@ export async function handlePrismaMageRequest<T>(
     }
   }
 
-  const orderBy = sort ? { [sort]: order } : (options.orderBy || { id: 'asc' });
+  const orderBy = sort 
+    ? { [sort]: order } as Record<string, 'asc' | 'desc'>
+    : (options.orderBy || { id: 'asc' as const });
 
   const items = await prismaModel.findMany({
     where: whereClause,
@@ -83,10 +95,10 @@ export async function handlePrismaMageRequest<T>(
  * @returns Array of found items
  */
 export async function handlePrismaMageHydration<T>(
-  prismaModel: any,
+  prismaModel: PrismaModel<T>,
   query: MageHydrationRequest,
   options: {
-    where?: any;
+    where?: Record<string, unknown>;
   } = {}
 ) {
   const idsParam = query.ids;

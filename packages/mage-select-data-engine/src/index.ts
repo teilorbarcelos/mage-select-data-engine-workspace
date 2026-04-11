@@ -39,6 +39,14 @@ export class MageSelectEngine<T> {
     this.config = config;
   }
 
+  /**
+   * Updates the engine configuration dynamically.
+   * Useful in React environments where config might change between renders.
+   */
+  public updateConfig(config: MageSelectEngineConfig<T>) {
+    this.config = config;
+  }
+
   public getState() {
     return this.state;
   }

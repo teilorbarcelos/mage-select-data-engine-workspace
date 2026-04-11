@@ -1,6 +1,25 @@
 {
   "name": "mage-select-data-engine",
   "version": "1.0.0",
+  "description": "Framework-agnostic data engine for select components featuring offset pagination, dynamic search, and entity hydration.",
+  "keywords": [
+    "select",
+    "search",
+    "pagination",
+    "hydration",
+    "prisma",
+    "engine",
+    "data-fetching"
+  ],
+  "author": "Teilor Barcelos",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/teilorbarcelos/mage-select-data-engine"
+  },
+  "files": [
+    "dist"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

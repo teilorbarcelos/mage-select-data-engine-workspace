@@ -4,12 +4,21 @@ import { useEffect, useMemo, useSyncExternalStore } from 'react';
 export function useMageSelect<T>(
   config: MageSelectEngineConfig<T> | MageSelectEngine<T>
 ) {
-  const engine = useMemo(() => {
+  const engineContext = useMemo(() => {
     if (config instanceof MageSelectEngine) {
-      return config;
+      return { instance: config, isExternal: true };
     }
-    return new MageSelectEngine(config);
-  }, [config]);
+    return { instance: new MageSelectEngine(config), isExternal: false };
+  }, []); // Stable instance
+
+  const engine = engineContext.instance;
+
+  // Sync config synchronously during render if it's managed internally
+  useMemo(() => {
+    if (!engineContext.isExternal && !(config instanceof MageSelectEngine)) {
+      engine.updateConfig(config);
+    }
+  }, [config, engine, engineContext.isExternal]);
 
   const state = useSyncExternalStore(
     (onStoreChange) => engine.subscribe(onStoreChange),

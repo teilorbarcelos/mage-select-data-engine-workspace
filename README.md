@@ -5,8 +5,8 @@ A full-stack monorepo for the `mage-select-data-engine`, an asynchronous select 
 ## 📦 Structure
 
 - `packages/mage-select-data-engine`: Framework-agnostic core data engine logic.
-- `packages/mage-react`: React adapter using subscriptions (optimized renders).
-- `packages/mage-react-hook-form`: Clean integration via `useMageSelectController`.
+- `packages/mage-select-data-react`: React adapter using subscriptions (optimized renders).
+- `packages/mage-select-data-react-hook-form`: Clean integration via `useMageSelectController`.
 - `apps/backend`: Node.js Express API mock consuming the database.
 - `apps/frontend`: Vite React App with test forms and optimized styling.
 - `prisma`: Global SQLite configuration, schema, and seeds.
@@ -44,13 +44,15 @@ bun dev
 
 This will:
 - Run TSUP in watch mode for `packages`.
-- Start the backend on port **3001**.
-- Start the frontend on port **5173**.
+- Start the backend on port **8888**.
+- Start the frontend on port **3000**.
 
-Access [http://localhost:5173](http://localhost:5173).
+Access [http://localhost:3000](http://localhost:3000).
 
 ## 🚀 How the React Adapter works?
 
-To use the core, create options by connecting to your project's endpoints. The backend needs to provide endpoints for pagination and ID-based lookup (for automatic Hydration in Edit Mode).
-
-The `MageSelect` in this monorepo's frontend faithfully demonstrates the engine's behavior!
+The `MageSelect` in this monorepo's frontend demonstrates an optimized **Search-First Combo Box** layout:
+- **Search Input**: Located at the top for immediate filtering.
+- **Dynamic Chips**: Selected items appear below in a flexible wrapping container.
+- **Strict Typing**: No `any` types allowed in the full-stack implementation.
+- **RHF Integration**: Full support for validation `rules` and `fieldState`.

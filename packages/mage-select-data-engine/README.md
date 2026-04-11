@@ -1,102 +1,100 @@
-# mage-select-data-engine
+# Mage Select Engine 🧙‍♂️
 
-Framework-agnostic data engine for select components featuring offset pagination, dynamic search, and entity hydration.
+[![npm version](https://img.shields.io/npm/v/mage-select-data-engine.svg?style=flat-square)](https://www.npmjs.com/package/mage-select-data-engine)
+[![license](https://img.shields.io/npm/l/mage-select-data-engine.svg?style=flat-square)](https://github.com/teilorbarcelos/mage-select-data-engine/blob/main/LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)
 
-## Features
+**Mage Select** is a suite of professional packages for building robust, high-performance select components. It solves the most complex parts of data-fetching: pagination, search indexing, state management, and entity hydration.
 
-- **Offset Pagination**: Full control over pages (`page`) and page size.
-- **Integrated Search**: Support for search terms with automatic state reset.
-- **Internal Cache**: Entity management to prevent duplicate requests.
-- **Framework Agnostic**: Can be used with any framework or vanilla JS.
-- **Hydration**: Automatically resolves initial IDs into full objects.
+## 📦 The Ecosystem
 
-## Installation
+Mage is modular. Choose the level of abstraction that fits your project:
 
-```bash
-pnpm add mage-select-data-engine
+| Package | Purpose | Installation |
+| :--- | :--- | :--- |
+| **`mage-select-data-engine`** | **Core Engine**. Framework-agnostic logic, cache & pagination. | `pnpm add mage-select-data-engine` |
+| **`mage-select-data-react`** | **React Adapter**. Hooks for high-performance state sync. | `pnpm add mage-select-data-react` |
+| **`mage-select-data-react-hook-form`** | **RHF Bridge**. High-level controller with auto-hydration. | `pnpm add mage-select-data-react-hook-form` |
+
+---
+
+## ✨ Features
+
+- **🚀 Headless & Agnostic**: The core engine doesn't care about your UI components.
+- **🔄 Smart Hydration**: Automatically resolves initial IDs into full objects. No more "ID-only" flashes.
+- **🔍 Integrated Search**: Debounced search with automatic state reset and cache-aware indexing.
+- **📄 Offset Pagination**: Native support for "Load More" patterns with zero boilerplate.
+- **🛡️ Type-Safe Backend**: Optimized Prisma utilities for Node.js backends.
+
+---
+
+## 🚀 Quick Start (React + Hook Form)
+
+The recommended way to use Mage in React projects is via the **React Hook Form** integration.
+
+```tsx
+import { useMageSelectController } from 'mage-select-data-react-hook-form';
+
+function UserSelect({ control }) {
+  const { field, state, setSearch, loadMore } = useMageSelectController({
+    name: 'userIds',
+    control,
+    multiple: true,
+    engineOrConfig: {
+      fetchPage: (page, search) => fetch(`/api/users?page=${page}&search=${search}`).then(r => r.json()),
+      fetchByIds: (ids) => fetch(`/api/users/ids?ids=${ids.join(',')}`).then(r => r.json()),
+      getId: (u) => u.id
+    }
+  });
+
+  return (
+    <div>
+      <input 
+        placeholder="Search..." 
+        onChange={(e) => setSearch(e.target.value)} 
+      />
+      <ul>
+        {state.items.map(user => (
+          <li key={user.id} onClick={() => field.onChange([...field.value, user.id])}>
+            {user.name}
+          </li>
+        ))}
+      </ul>
+      {state.hasMore && <button onClick={loadMore}>Load More</button>}
+    </div>
+  );
+}
 ```
 
-## Basic Usage
+---
 
-```typescript
-import { MageSelectEngine } from 'mage-select-data-engine';
+## 🛠️ Backend Utilities (Prisma)
 
-const engine = new MageSelectEngine({
-  fetchPage: async (page, search) => {
-    const res = await fetch(`/api/data?page=${page}&search=${search}`);
-    return res.json();
-  },
-  fetchByIds: async (ids) => {
-    const res = await fetch(`/api/data/ids?ids=${ids.join(',')}`);
-    return res.json();
-  },
-  getId: (item) => item.id
-});
-
-engine.subscribe((state) => {
-  console.log('New state:', state);
-});
-
-engine.initialLoad();
-engine.setSearch('term');
-engine.loadMore();
-```
-
-## Backend Implementation (Prisma)
-
-The package provides standard utilities for backend implementation using Prisma.
-
-### Listing Items
-
-The `handlePrismaMageRequest` function handles offset pagination, dynamic search, and sorting.
+Mage includes production-ready server utilities to handle complex queries:
 
 ```typescript
 import { handlePrismaMageRequest } from 'mage-select-data-engine/server';
 
+// In your Express/Fastify route
 app.get('/api/users', async (req, res) => {
-  const result = await handlePrismaMageRequest(prisma.user, req.query, {
+  const data = await handlePrismaMageRequest(prisma.user, req.query, {
     pageSize: 20,
-    orderBy: { name: 'asc' },
-    where: { status: 'ACTIVE' }
+    orderBy: { name: 'asc' }
   });
-  
-  res.json(result);
+  res.json(data);
 });
 ```
 
-### Fetching by IDs (Hydration)
+---
 
-The `handlePrismaMageHydration` function resolves a list of IDs into full objects, used for initial hydration.
+## 📚 Documentation
 
-```typescript
-import { handlePrismaMageHydration } from 'mage-select-data-engine/server';
+Detailed documentation for each package can be found in their respective directories:
 
-app.get('/api/users/ids', async (req, res) => {
-  const items = await handlePrismaMageHydration(prisma.user, req.query);
-  
-  res.json(items);
-});
-```
+- [`mage-select-data-react`](./packages/mage-select-data-react/README.md) - Hooks and React State management.
+- [`mage-select-data-react-hook-form`](./packages/mage-select-data-react-hook-form/README.md) - Form integration.
+- [`mage-select-data-engine`](./packages/mage-select-data-engine/README.md) - Core API and Server utilities.
 
-### Request Parameters
+## 📄 License
 
-The backend utilities automatically interpret the following query parameters:
-
-- `page`: Page number (starting from 1).
-- `pageSize`: Number of items per page.
-- `search`: Search term.
-- `columns`: Comma-separated list of columns to search (e.g., `name,email`).
-- `sort`: Column name to sort by.
-- `order`: Sort direction (`asc` or `desc`).
-- `ids`: Comma-separated IDs for hydration.
-
-## State API
-
-The state (`getState()`) includes:
-- `items`: List of currently loaded selectable items.
-- `selectedItems`: Full objects of selected items.
-- `isLoading`: Current page loading status.
-- `isHydrating`: Initial IDs lookup status.
-- `search`: Current search term.
-- `page`: Current page index.
-- `hasMore`: Indicates if more data is available.
+MIT © [Teilor Barcelos](https://github.com/teilorbarcelos)

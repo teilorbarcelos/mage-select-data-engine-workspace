@@ -31,7 +31,7 @@ app.get('/users/by-ids', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8888;
 app.listen(PORT, () => {
   console.log(`Backend server listening natively on port ${PORT}`);
 });
