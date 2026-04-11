@@ -1,0 +1,55 @@
+{
+  "name": "mage-select-data-react",
+  "version": "1.0.1",
+  "description": "React adapter for mage-select-data-engine. High-performance hooks for state synchronization.",
+  "keywords": [
+    "react",
+    "select",
+    "hooks",
+    "data-engine",
+    "state-management"
+  ],
+  "author": "Teilor Barcelos",
+  "license": "MIT",
+  "homepage": "https://github.com/teilorbarcelos/mage-select-data-engine-workspace#readme",
+  "bugs": {
+    "url": "https://github.com/teilorbarcelos/mage-select-data-engine-workspace/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/teilorbarcelos/mage-select-data-engine-workspace"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+       "types": "./dist/index.d.ts",
+       "require": "./dist/index.js",
+       "import": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "mage-select-data-engine": "^1.0.0"
+  },
+  "devDependencies": {
+    "react": "^18.2.0",
+    "@types/react": "^18.2.0",
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.0",
+    "mage-select-data-engine": "workspace:*"
+  }
+}

@@ -14,8 +14,8 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.51.0",
     "mage-select-data-engine": "workspace:*",
-    "mage-react": "workspace:*",
-    "mage-react-hook-form": "workspace:*",
+    "mage-select-data-react": "workspace:*",
+    "mage-select-data-react-hook-form": "workspace:*",
     "lucide-react": "^0.360.0"
   },
   "devDependencies": {

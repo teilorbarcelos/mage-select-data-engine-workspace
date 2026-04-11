@@ -1,59 +1,58 @@
 # Mage Select Data Engine
 
-Monorepository completo do engine `mage-select-data-engine` para select assíncrono com infinite scroll e entity hydration.
+A full-stack monorepo for the `mage-select-data-engine`, an asynchronous select engine with infinite scroll and entity hydration.
 
-## 📦 Estrutura
+## 📦 Structure
 
-- `packages/mage-select-data-engine`: Core agnóstico do data engine logic.
-- `packages/mage-react`: Adaptador React usando subscriptions (sem renders desnecessários).
-- `packages/mage-react-hook-form`: Integração limpa e direta via `useMageSelectController`.
-- `apps/backend`: Node.js Express API mock consumindo o banco.
-- `apps/frontend`: Vite React App com formulário de teste, estilização otimizada.
-- `prisma`: Configuração global do SQLite, schema e seeds.
+- `packages/mage-select-data-engine`: Framework-agnostic core data engine logic.
+- `packages/mage-select-data-react`: React adapter using subscriptions (optimized renders).
+- `packages/mage-select-data-react-hook-form`: Clean integration via `useMageSelectController`.
+- `apps/backend`: Node.js Express API mock consuming the database.
+- `apps/frontend`: Vite React App with test forms and optimized styling.
+- `prisma`: Global SQLite configuration, schema, and seeds.
 
-## 🛠 Como iniciar
+## 🛠 Getting Started
 
-Para iniciar e testar o projeto, siga estes comandos a partir da raiz do repositório:
+To start and test the project, follow these commands from the repository root:
 
-### 1. Instalar dependências
+### 1. Install dependencies
 ```bash
 npx pnpm install
 ```
 
-### 2. Preparar Banco de Dados (SQLite)
-Gere as tabelas e popule 1500+ registros via script de seed:
+### 2. Prepare Database (SQLite)
+Generate tables and populate with 1500+ records via seed script:
 ```bash
 npx pnpm --filter mage-prisma run db:push
 npx pnpm --filter mage-prisma run db:seed
 ```
 
-### 3. Build completo (Opcional, mas recomendado)
-Para garantir que todos os pacotes `.d.ts` esão amarrados:
+### 3. Full Build (Optional, but recommended)
+To ensure all package `.d.ts` files are correctly linked:
 ```bash
 npx pnpm build
 ```
 
-### 4. Modo de Desenvolvimento Paralelo
-Nós configuramos o **TurboRepo** para permitir que toda a stack do monorepo suba com apenas um comando e ative o recarregamento automático nativo (Hot Reload):
+### 4. Continuous Development Mode
+We configured **TurboRepo** to allow the entire stack to run with a single command with native Hot Reload:
 
 ```bash
 npx pnpm dev
-```
-
-or
-
-```bash
+# or
 bun dev
 ```
-Isso vai:
-- Rodar o TSUP em watch mode para os `packages` (mage-select-data-engine, mage-react, etc).
-- Iniciar o backend na porta **3001** (Node Express/Prisma).
-- Iniciar o frontend na porta **5173** (Vite + React).
 
-Acesse [http://localhost:5173](http://localhost:5173).
+This will:
+- Run TSUP in watch mode for `packages`.
+- Start the backend on port **8888**.
+- Start the frontend on port **3000**.
 
-## 🚀 Como funciona o React Adapter?
+Access [http://localhost:3000](http://localhost:3000).
 
-Para usar o core, crie as opções conectando aos endpoints do seu projeto. O backend precisa fornecer endpoints isolados para paginação e busca por ID (para Hydration automático no Edit Mode).
+## 🚀 How the React Adapter works?
 
-O `MageSelect` da raiz deste monorepo no frontend demonstra fielmente o comportamento agnóstico!
+The `MageSelect` in this monorepo's frontend demonstrates an optimized **Search-First Combo Box** layout:
+- **Search Input**: Located at the top for immediate filtering.
+- **Dynamic Chips**: Selected items appear below in a flexible wrapping container.
+- **Strict Typing**: No `any` types allowed in the full-stack implementation.
+- **RHF Integration**: Full support for validation `rules` and `fieldState`.
