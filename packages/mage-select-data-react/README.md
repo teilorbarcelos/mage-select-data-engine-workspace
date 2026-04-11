@@ -1,7 +1,7 @@
 # mage-select-data-react ⚛️
 
 [![npm version](https://img.shields.io/npm/v/mage-select-data-react.svg?style=flat-square)](https://www.npmjs.com/package/mage-select-data-react)
-[![license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/teilorbarcelos/mage-select-data-engine-workspace-workspace/blob/main/LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/teilorbarcelos/mage-select-data-engine-workspace/blob/main/LICENSE)
 
 React adapter for **Mage Select**. Features high-performance state synchronization using `useSyncExternalStore` to prevent unnecessary re-renders.
 
