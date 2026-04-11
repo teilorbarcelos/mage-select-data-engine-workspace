@@ -3,16 +3,27 @@
 [![npm version](https://img.shields.io/npm/v/mage-select-data-engine.svg?style=flat-square)](https://www.npmjs.com/package/mage-select-data-engine)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/teilorbarcelos/mage-select-data-engine-workspace/blob/main/LICENSE)
 
-> **"Built for scale. The engine that makes infinite scroll in selects effortless."**
+> **"Stop loading 500+ items in your selects. Save your backend and your users' RAM."**
 
-## 🚨 The Problem: The Scalability Wall
+## 🚨 The Scalability Debt
 
-Most select libraries work great with 50 items. But as your application grows (CRUDs, Logs, Large Catalogs), you hit the **Scalability Wall**:
-1. **Performance**: Rendering 5,000 items in a dropdown crashes the browser.
-2. **Complexity**: Implementing `IntersectionObserver`, pagination state, and search debouncing manually for every select is a nightmare.
-3. **Ghost Selections**: On "Edit Mode", when you have a selected ID that isn't in the first page of results, the label disappears.
+In many applications, Select components start simple. But as your data grows (CRUDs, Large Catalogs, Logs), you hit a technological debt:
+- **Client-Side Exhaustion**: Rendering thousands of items freezes the browser and drains battery.
+- **Backend Latency**: Fetching massive lists for every dropdown interaction slows down your database.
+- **Data Degradation**: In "Edit Mode", a select often loses its label because the current ID isn't in the first page of results, leading to "ghost" values.
 
-**Mage Select** handles the heavy lifting of **Dynamic Infinite Lists** while bridging the **ID vs. Object Gap**.
+**Mage Select** is an entity-aware engine that eliminates this debt by managing **Dynamic Infinite Scrolling** and **Automatic Hydration** at the architectural level.
+
+---
+
+## ⚖️ Without vs. With Mage Select
+
+| Challenge | Without Mage Select | With Mage Select |
+| :--- | :--- | :--- |
+| **Data Volume** | Browser memory leaks with large datasets. | **Virtualized logic**. Only active pages are in memory. |
+| **Edit Mode** | "Empty labels" for IDs out of the initial list. | **Auto-Hydration**. Rich data is always present. |
+| **Implementation** | Boilerplate for IntersectionObserver & Debounce. | **Zero boilerplate**. Core engine handles logic. |
+| **Backend Health** | Heavy queries for full lists. | **Surgical queries** via offset pagination. |
 
 ---
 
@@ -22,7 +33,7 @@ Most select libraries work great with 50 items. But as your application grows (C
 | :--- | :--- |
 | **`mage-select-data-engine`** | **Core Engine**. Infinite scroll logic, deduplication & pagination. |
 | **`mage-select-data-react`** | **React Adapter**. Hooks for high-performance state sync. |
-| **`mage-select-data-rhf`** | **RHF Bridge**. Auto-hydration & seamless Form integration. |
+| **`mage-select-data-react-hook-form`** | **RHF Bridge**. Auto-hydration & seamless Form integration. |
 
 ---
 
@@ -30,7 +41,7 @@ Most select libraries work great with 50 items. But as your application grows (C
 
 - **🚀 Automated Infinite Scroll**: Manage offset pagination and loading states with zero boilerplate.
 - **🔍 High-Performance Search**: Debounced and cache-aware indexing.
-- **🔄 Deep Hydration**: Automatically resolves pre-selected IDs into rich objects, even if they aren't on the current page.
+- **🔄 Smart Hydration**: Automatically fetches missing objects for your initial IDs.
 - **🛡️ 100% Type-Safe**: Zero `any`. Built with strict TypeScript for senior-level stability.
 
 ---
@@ -95,7 +106,7 @@ function CustomSelect() {
         onChange={(e) => setSearch(e.target.value)} 
       />
       
-      <ul className="scrollable-container" onScroll={handleScroll}>
+      <ul className="scrollable-container">
         {state.items.map(item => (
           <li key={item.id} onClick={() => toggleSelection(item)}>
             {item.name} {state.selectedItems.some(i => i.id === item.id) && '✓'}
