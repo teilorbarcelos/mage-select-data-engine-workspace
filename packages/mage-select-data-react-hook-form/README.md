@@ -1,7 +1,7 @@
 # mage-select-data-react-hook-form 📋
 
 [![npm version](https://img.shields.io/npm/v/mage-select-data-react-hook-form.svg?style=flat-square)](https://www.npmjs.com/package/mage-select-data-react-hook-form)
-[![license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/teilorbarcelos/mage-select-data-engine-workspace/blob/main/LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/teilorbarcelos/mage-select-data-engine-workspace-workspace/blob/main/LICENSE)
 
 High-level integration between **Mage Select** and **React Hook Form**.
 
@@ -63,4 +63,4 @@ Mage solves the "asynchronous edit" problem. If your form initializes with IDs, 
 Supports all standard RHF `rules` (required, validate, etc.), seamlessly integrated with the engine's loading states.
 
 ---
-Part of the [Mage Select Ecosystem](https://github.com/teilorbarcelos/mage-select-data-engine).
+Part of the [Mage Select Ecosystem](https://github.com/teilorbarcelos/mage-select-data-engine-workspace).
