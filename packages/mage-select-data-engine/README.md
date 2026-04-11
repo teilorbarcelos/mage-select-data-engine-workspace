@@ -2,61 +2,93 @@
 
 [![npm version](https://img.shields.io/npm/v/mage-select-data-engine.svg?style=flat-square)](https://www.npmjs.com/package/mage-select-data-engine)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/teilorbarcelos/mage-select-data-engine-workspace/blob/main/LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)
 
-**Mage Select** is a suite of professional packages for building robust, high-performance select components. It solves the most complex parts of data-fetching: pagination, search indexing, state management, and entity hydration.
+> **"An entity-aware infinite select engine. Solving the gap between IDs and rich data."**
 
-## 📦 The Ecosystem
+## 🚨 The Problem
 
-Mage is modular. Choose the level of abstraction that fits your project:
+Most select components (and developers) treat data as simple lists. But in production, you face the **ID vs. Object Gap**:
+1. Your database uses **IDs**.
+2. Your UI needs **Objects** (Labels, Icons, Metadata).
+3. On "Edit Mode", you only have IDs, leading to **empty labels** until the user searches.
+
+**Mage Select** bridges this gap by managing pagination, search, and **automatic entity hydration**.
+
+---
+
+## 📦 Ecosystem
 
 | Package | Purpose | Installation |
 | :--- | :--- | :--- |
-| **`mage-select-data-engine`** | **Core Engine**. Framework-agnostic logic, cache & pagination. | `pnpm add mage-select-data-engine` |
-| **`mage-select-data-react`** | **React Adapter**. Hooks for high-performance state sync. | `pnpm add mage-select-data-react` |
-| **`mage-select-data-react-hook-form`** | **RHF Bridge**. High-level controller with auto-hydration. | `pnpm add mage-select-data-react-hook-form` |
+| **`mage-select-data-engine`** | **Core Engine**. Logic, cache & pagination. | `pnpm add mage-select-data-engine` |
+| **`mage-select-data-react`** | **React Adapter**. Hooks for state sync. | `pnpm add mage-select-data-react` |
+| **`mage-select-data-rhf`** | **RHF Bridge**. Auto-hydration & Form state. | `pnpm add mage-select-data-react-hook-form` |
 
 ---
 
-## ✨ Features
+## 🚀 Implementation Guide
 
-- **🚀 Headless & Agnostic**: The core engine doesn't care about your UI components.
-- **🔄 Smart Hydration**: Automatically resolves initial IDs into full objects. No more "ID-only" flashes.
-- **🔍 Integrated Search**: Debounced search with automatic state reset and cache-aware indexing.
-- **📄 Offset Pagination**: Native support for "Load More" patterns with zero boilerplate.
-- **🛡️ Type-Safe Backend**: Optimized Prisma utilities for Node.js backends.
+Choose the approach that best fits your project:
 
----
-
-## 🚀 Quick Start (React + Hook Form)
-
-The recommended way to use Mage in React projects is via the **React Hook Form** integration.
+<details>
+<summary><b>🔥 Option 1: React Hook Form (Recommended)</b></summary>
+<p>
+Best for productivity. Handles form state, validation, and automatic ID-to-Object hydration.
+</p>
 
 ```tsx
 import { useMageSelectController } from 'mage-select-data-react-hook-form';
+import { useForm } from 'react-hook-form';
 
-function UserSelect({ control }) {
-  const { field, state, setSearch, loadMore } = useMageSelectController({
+function MyForm() {
+  const { control } = useForm({
+    defaultValues: {
+      userIds: ['user-123'] // Mage will fetch 'user-123' data automatically
+    }
+  });
+
+  const { state, toggleSelection, setSearch, loadMore } = useMageSelectController({
     name: 'userIds',
     control,
-    multiple: true,
-    engineOrConfig: {
-      fetchPage: (page, search) => fetch(`/api/users?page=${page}&search=${search}`).then(r => r.json()),
-      fetchByIds: (ids) => fetch(`/api/users/ids?ids=${ids.join(',')}`).then(r => r.json()),
-      getId: (u) => u.id
-    }
+    fetchPage: async (p, s) => fetchUsers(p, s),
+    fetchByIds: async (ids) => fetchUsersByIds(ids),
+  });
+
+  return (
+    <MySelectView 
+      state={state} 
+      onSearch={setSearch} 
+      onLoadMore={loadMore}
+      onSelect={toggleSelection}
+    />
+  );
+}
+```
+</details>
+
+<details>
+<summary><b>⚛️ Option 2: Vanilla React (Manual Control)</b></summary>
+<p>
+Core logic for custom state management without form libraries.
+</p>
+
+```tsx
+import { useMageSelect } from 'mage-select-data-react';
+
+function SimpleSelect() {
+  const { state, toggleSelection, setSearch, loadMore } = useMageSelect({
+    fetchPage: async (p, s) => fetchItems(p, s),
+    fetchByIds: async (ids) => fetchByIds(ids),
+    initialSelectedIds: ['1'],
   });
 
   return (
     <div>
-      <input 
-        placeholder="Search..." 
-        onChange={(e) => setSearch(e.target.value)} 
-      />
+      <input onChange={(e) => setSearch(e.target.value)} />
       <ul>
-        {state.items.map(user => (
-          <li key={user.id} onClick={() => field.onChange([...field.value, user.id])}>
-            {user.name}
+        {state.items.map(item => (
+          <li key={item.id} onClick={() => toggleSelection(item)}>
+            {item.name} {state.selectedItems.includes(item) && '✅'}
           </li>
         ))}
       </ul>
@@ -65,35 +97,37 @@ function UserSelect({ control }) {
   );
 }
 ```
+</details>
 
----
-
-## 🛠️ Backend Utilities (Prisma)
-
-Mage includes production-ready server utilities to handle complex queries:
+<details>
+<summary><b>🖥️ Option 3: Server-Side (Node/Prisma)</b></summary>
+<p>
+Zero-boilerplate backend integration.
+</p>
 
 ```typescript
 import { handlePrismaMageRequest } from 'mage-select-data-engine/server';
 
-// In your Express/Fastify route
-app.get('/api/users', async (req, res) => {
-  const data = await handlePrismaMageRequest(prisma.user, req.query, {
-    pageSize: 20,
-    orderBy: { name: 'asc' }
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  
+  return handlePrismaMageRequest(prisma.user, searchParams, {
+    searchField: 'name',
+    include: { profile: true },
+    orderBy: { createdAt: 'desc' }
   });
-  res.json(data);
-});
+}
 ```
+</details>
 
 ---
 
-## 📚 Documentation
+## ✨ Why Mage Select?
 
-Detailed documentation for each package can be found in their respective directories:
-
-- [`mage-select-data-react`](./packages/mage-select-data-react/README.md) - Hooks and React State management.
-- [`mage-select-data-react-hook-form`](./packages/mage-select-data-react-hook-form/README.md) - Form integration.
-- [`mage-select-data-engine`](./packages/mage-select-data-engine/README.md) - Core API and Server utilities.
+- **🚀 Headless**: No CSS, no UI components. Plug it into Radix, Headless UI, or your own styles.
+- **🔄 Smart Hydration**: Automatically fecthes missing objects for your initial IDs.
+- **🔍 State-Aware Search**: Debounced and cache-aware search that doesn't reset your selection.
+- **🛡️ 100% Type-Safe**: Built with strict TypeScript. Zero `any`.
 
 ## 📄 License
 
