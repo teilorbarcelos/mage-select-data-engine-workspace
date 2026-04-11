@@ -11,7 +11,8 @@
     "quality-check": "pnpm check-any && pnpm check-comments",
     "check-any": "! grep -rE '(: any|as any|<any>|any\\[\\])' packages apps --exclude-dir=node_modules --exclude-dir=dist",
     "check-comments": "! grep -r '^[[:space:]]*//' packages apps --exclude-dir=node_modules --exclude-dir=dist --exclude='*.md' | grep -v '///'",
-    "release": "pnpm build && pnpm --filter \"./packages/*\" publish --access public --no-git-checks",
+    "bump": "pnpm --filter \"./packages/*\" exec npm version patch",
+    "release": "[ \"$(git rev-parse --abbrev-ref HEAD)\" = \"main\" ] && pnpm build && pnpm --filter \"./packages/*\" publish --access public --no-git-checks || (echo \"Erro: Publicação permitida apenas na branch 'main'.\" && exit 1)",
     "pack:libs": "pnpm --filter \"./packages/*\" pack",
     "prepare": "husky install"
   },
