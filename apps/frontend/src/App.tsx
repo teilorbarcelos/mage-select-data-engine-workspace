@@ -1,6 +1,6 @@
+import { MageSelectEngineConfig } from 'mage-select-data-engine';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { MageSelectEngineConfig } from 'mage-select-data-engine';
 import { MageSelect } from './MageSelect';
 
 interface User {
@@ -102,12 +102,10 @@ function App() {
   const [demoIds, setDemoIds] = useState<string[] | null>(null);
 
   useEffect(() => {
-    // Fetch a couple of users from the DB to use their real CUIDs as starting values for the Edit flow
     fetch('http://localhost:3001/users')
       .then((res) => res.json())
       .then((data) => {
         if (data.items && data.items.length >= 2) {
-          // Grab the ID of the 2nd and 3rd user from the DB
           setDemoIds([data.items[1].id, data.items[2].id]);
         }
       });

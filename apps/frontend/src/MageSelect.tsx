@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, useCallback, ReactNode } from 'react';
 import { useMageSelectController } from 'mage-react-hook-form';
 import { MageSelectEngineConfig } from 'mage-select-data-engine';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { Control, FieldValues, Path } from 'react-hook-form';
 
 export interface MageSelectProps<T, TFieldValues extends FieldValues, TName extends Path<TFieldValues>> {
@@ -32,7 +32,6 @@ export function MageSelect<T, TFieldValues extends FieldValues, TName extends Pa
   const { items, selectedItems, isLoading, isHydrating, hasMore } = state;
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Debounce search
   useEffect(() => {
     const handler = setTimeout(() => {
       setSearch(searchTerm);
@@ -40,14 +39,11 @@ export function MageSelect<T, TFieldValues extends FieldValues, TName extends Pa
     return () => clearTimeout(handler);
   }, [searchTerm, setSearch]);
 
-  // Reset local search when closed to optionally clear filter, but leaving it as is works too
   useEffect(() => {
     if (!isOpen && searchTerm !== '') {
-       // Optional: clear search on close, but keeping it is fine.
     }
   }, [isOpen, searchTerm]);
 
-  // Handle external clicks
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -58,7 +54,6 @@ export function MageSelect<T, TFieldValues extends FieldValues, TName extends Pa
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Infinite Scroll Observer
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const target = entries[0];

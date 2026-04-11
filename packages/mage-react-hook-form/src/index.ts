@@ -1,9 +1,9 @@
-import { useController, useFormContext, Control, FieldValues, Path } from 'react-hook-form';
-import { useEffect, useMemo, useRef } from 'react';
-import { MageSelectEngine, MageSelectEngineConfig } from 'mage-select-data-engine';
 import { useMageSelect } from 'mage-react';
+import { MageSelectEngine, MageSelectEngineConfig } from 'mage-select-data-engine';
+import { useEffect, useRef } from 'react';
+import { Control, FieldValues, Path, useController } from 'react-hook-form';
 
-import { ControllerRenderProps, ControllerFieldState } from 'react-hook-form';
+import { ControllerFieldState, ControllerRenderProps } from 'react-hook-form';
 
 export interface UseMageSelectControllerProps<T, TFieldValues extends FieldValues, TName extends Path<TFieldValues>> {
   name: TName;
@@ -39,10 +39,8 @@ export function useMageSelectController<T, TFieldValues extends FieldValues, TNa
   const engineHook = useMageSelect(engineOrConfig);
   const { engine, state } = engineHook;
 
-  // Hydration ref to prevent infinite loops during array syncs
   const isHydratingRef = useRef(false);
 
-  // Sync Form Value -> Engine State (Hydration on Mount or programmatic change)
   useEffect(() => {
     if (value === undefined || value === null || value === '') {
        engine.setValue([]);
@@ -52,8 +50,6 @@ export function useMageSelectController<T, TFieldValues extends FieldValues, TNa
     const valueArray = Array.isArray(value) ? value : [value];
     const currentSelectedIds = state.selectedItems.map(engine['config'].getId);
     
-    // Naive check to see if we need hydration (if external form value doesn't match internal items)
-    // A strict implementation would do deep equal, but for IDs this is sufficient
     const needsHydration = JSON.stringify(valueArray) !== JSON.stringify(currentSelectedIds);
 
     if (needsHydration && !isHydratingRef.current) {
@@ -64,14 +60,11 @@ export function useMageSelectController<T, TFieldValues extends FieldValues, TNa
     }
   }, [value, engine]);
 
-  // Sync Engine State -> Form Value
   useEffect(() => {
-    // Allow hydration to finish before syncing backward
     if (state.isHydrating || isHydratingRef.current) return;
 
     const selectedIds = state.selectedItems.map(item => engine['config'].getId(item));
     
-    // Only update if changed
     const currentFormArray = Array.isArray(value) ? value : (value !== undefined && value !== null ? [value] : []);
     const changed = JSON.stringify(selectedIds) !== JSON.stringify(currentFormArray);
 

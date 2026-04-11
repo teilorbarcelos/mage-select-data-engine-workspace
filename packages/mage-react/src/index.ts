@@ -1,10 +1,9 @@
-import { useSyncExternalStore, useMemo, useEffect } from 'react';
 import { MageSelectEngine, MageSelectEngineConfig } from 'mage-select-data-engine';
+import { useEffect, useMemo, useSyncExternalStore } from 'react';
 
 export function useMageSelect<T>(
   config: MageSelectEngineConfig<T> | MageSelectEngine<T>
 ) {
-  // Use existing instance or create a new one based on config
   const engine = useMemo(() => {
     if (config instanceof MageSelectEngine) {
       return config;
@@ -15,11 +14,10 @@ export function useMageSelect<T>(
   const state = useSyncExternalStore(
     (onStoreChange) => engine.subscribe(onStoreChange),
     () => engine.getState(),
-    () => engine.getState() // Server snapshot fallback
+    () => engine.getState()
   );
 
   useEffect(() => {
-    // Attempt initial load only once automatically
     engine.initialLoad();
   }, [engine]);
 

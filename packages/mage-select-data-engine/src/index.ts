@@ -6,8 +6,8 @@ export interface MageSelectEngineConfig<T> {
 }
 
 export interface MageSelectEngineState<T> {
-  items: T[]; // Currently loaded selectable items
-  selectedItems: T[]; // Full objects of selected items
+  items: T[];
+  selectedItems: T[];
   isLoading: boolean;
   isHydrating: boolean;
   page: number;
@@ -69,7 +69,6 @@ export class MageSelectEngine<T> {
   public async setSearch(term: string) {
     if (this.state.search === term) return;
     
-    // Reset state for new search
     this.updateState({
       search: term,
       page: 1,
@@ -107,7 +106,6 @@ export class MageSelectEngine<T> {
       const response = await this.config.fetchPage(nextPage, this.state.search);
       this.persistToCache(response.items);
       
-      // Prevent duplicates in the overall items list robustly
       const existingIds = new Set(this.state.items.map(this.config.getId));
       const newItems = response.items.filter(
         (i) => !existingIds.has(this.config.getId(i))
@@ -125,13 +123,10 @@ export class MageSelectEngine<T> {
   }
 
   public async setValue(ids: string[]) {
-    // If setting to empty, just clear selected
     if (ids.length === 0) {
       this.updateState({ selectedItems: [] });
       return;
     }
-
-    // Check which ones are missing from cache
     const missingIds = ids.filter((id) => !this.cache.has(id));
 
     if (missingIds.length > 0) {
@@ -142,14 +137,13 @@ export class MageSelectEngine<T> {
         this.updateState({ isHydrating: false, error: undefined });
       } catch (e) {
         this.updateState({ isHydrating: false, error: String(e) });
-        return; // Early return on error, might not have the full selected items
+        return;
       }
     }
 
-    // Map all ids from cache
     const selectedItems = ids
       .map((id) => this.cache.get(id)!)
-      .filter(Boolean); // Filter out any that still might be missing if API returned partial
+      .filter(Boolean);
 
     this.updateState({ selectedItems });
   }

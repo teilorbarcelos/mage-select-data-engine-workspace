@@ -1,6 +1,6 @@
-import express from 'express';
-import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
+import cors from 'cors';
+import express from 'express';
 
 const app = express();
 app.use(cors());
@@ -29,7 +29,7 @@ app.get('/users', async (req, res) => {
 
     const users = await prisma.user.findMany({
       where: whereClause,
-      take: pageSize + 1, // Fetch one more to check if there is a next page
+      take: pageSize + 1,
       skip: (page - 1) * pageSize,
       orderBy: { id: 'asc' },
     });
@@ -37,7 +37,7 @@ app.get('/users', async (req, res) => {
     let hasMore = false;
     if (users.length > pageSize) {
       hasMore = true;
-      users.pop(); // Remove the extra item
+      users.pop();
     }
 
     res.json({ items: users, hasMore });
