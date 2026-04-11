@@ -1,6 +1,6 @@
 {
   "name": "mage-select-data-engine",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Framework-agnostic data engine for select components featuring offset pagination, dynamic search, and entity hydration.",
   "keywords": [
     "select",
