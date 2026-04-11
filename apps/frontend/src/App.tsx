@@ -122,7 +122,7 @@ function App() {
         ) : (
           <div className="form-card">
             <h2>Edit Flow</h2>
-            <p>Carregando IDs válidos do banco de dados para demonstrar a Hydration...</p>
+            <p>Loading valid IDs from database to demonstrate Hydration...</p>
           </div>
         )}
       </div>

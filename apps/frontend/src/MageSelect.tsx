@@ -123,14 +123,13 @@ export function MageSelect<T, TFieldValues extends FieldValues, TName extends Pa
               </li>
             ))}
 
-            {isLoading && (
-              <li className="mage-select-loading-spinner">Carregando...</li>
+              <li className="mage-select-loading-spinner">Loading...</li>
             )}
             {!hasMore && items.length > 0 && (
-              <li className="mage-select-end-message">Não há mais resultados</li>
+              <li className="mage-select-end-message">No more results</li>
             )}
             {!hasMore && items.length === 0 && !isLoading && (
-              <li className="mage-select-end-message">Nenhum item encontrado</li>
+              <li className="mage-select-end-message">No items found</li>
             )}
             <li ref={loaderRef} style={{ height: 1 }} />
           </ul>
