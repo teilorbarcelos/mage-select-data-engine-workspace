@@ -13,7 +13,6 @@ export function useMageSelect<T>(
 
   const engine = engineContext.instance;
 
-  // Sync config synchronously during render if it's managed internally
   useMemo(() => {
     if (!engineContext.isExternal && !(config instanceof MageSelectEngine)) {
       engine.updateConfig(config);

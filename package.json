@@ -6,7 +6,12 @@
     "dev": "node scripts/dev.js",
     "lint": "turbo run lint",
     "test:turbo": "turbo run test",
-    "test": "vitest run"
+    "test": "vitest run",
+    "validate": "pnpm build && pnpm test",
+    "quality-check": "pnpm check-any && pnpm check-comments",
+    "check-any": "! grep -rE '(: any|as any|<any>|any\\[\\])' packages apps --exclude-dir=node_modules --exclude-dir=dist",
+    "check-comments": "! grep -r '^[[:space:]]*//' packages apps --exclude-dir=node_modules --exclude-dir=dist --exclude='*.md' | grep -v '///'",
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
@@ -17,6 +22,7 @@
     "happy-dom": "^20.8.9",
     "turbo": "^1.13.0",
     "typescript": "^5.4.0",
-    "vitest": "^2.1.9"
+    "vitest": "^2.1.9",
+    "husky": "^8.0.0"
   }
 }

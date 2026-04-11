@@ -46,7 +46,6 @@ export function useMageSelectController<T, TFieldValues extends FieldValues, TNa
   const isHydratingRef = useRef(false);
   const lastPushedValueRef = useRef<string>('');
 
-  // Form Value -> Engine State (Hydration/Sync)
   useEffect(() => {
     const valueArray = (Array.isArray(value) ? value : (value ? [value] : [])) as (T | string)[];
     const incomingIds = valueType === 'object' 
@@ -58,7 +57,6 @@ export function useMageSelectController<T, TFieldValues extends FieldValues, TNa
     const incomingIdsKey = [...incomingIds].sort().join(',');
     const currentIdsKey = [...currentSelectedIds].sort().join(',');
 
-    // Only sync back to engine if the change came from OUTSIDE (form state changed differently from what we last pushed)
     const hasExternalChange = incomingIdsKey !== currentIdsKey && incomingIdsKey !== lastPushedValueRef.current;
 
     if (hasExternalChange && !isHydratingRef.current) {
@@ -70,7 +68,6 @@ export function useMageSelectController<T, TFieldValues extends FieldValues, TNa
     }
   }, [value, valueType, engine, state.selectedItems]);
 
-  // Engine State -> Form Value (User Selection)
   useEffect(() => {
     if (state.isHydrating || isHydratingRef.current) return;
 
@@ -97,7 +94,6 @@ export function useMageSelectController<T, TFieldValues extends FieldValues, TNa
     }
   }, [state.selectedItems, state.isHydrating, multiple, valueType, onChange, value, engine]);
 
-  // Intercept toggleSelection to respect the 'multiple' flag at the engine level
   const controllerToggleSelection = (item: T) => {
     if (multiple) {
       engine.toggleSelection(item);

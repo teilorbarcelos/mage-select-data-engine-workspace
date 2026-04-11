@@ -38,33 +38,32 @@ describe('MageSelectView', () => {
   });
 
   it('should trigger loadMore automatically when sentinel becomes visible', async () => {
-    // Access the global IntersectionObserver mock
-    let observerCallback: any;
+    let observerCallback: IntersectionObserverCallback | undefined;
+    const mockObserver = {
+      observe: vi.fn(),
+      unobserve: vi.fn(),
+      disconnect: vi.fn(),
+    } as unknown as IntersectionObserver;
+
     vi.spyOn(global, 'IntersectionObserver').mockImplementation((cb) => {
       observerCallback = cb;
-      return {
-        observe: vi.fn(),
-        unobserve: vi.fn(),
-        disconnect: vi.fn(),
-      } as any;
+      return mockObserver;
     });
 
     render(<MageSelectView {...defaultProps} />);
     
-    // Open the dropdown
     const input = screen.getByPlaceholderText('Search...');
     await act(async () => {
       input.focus();
     });
 
-    // Wait for the dropdown and list to appear
     const list = await screen.findByRole('list');
     expect(list).toBeInTheDocument();
 
-    // Trigger the intersection callback
-    if (observerCallback) {
+    const callback = observerCallback;
+    if (callback) {
       await act(async () => {
-        observerCallback([{ isIntersecting: true }]);
+        callback([{ isIntersecting: true }] as IntersectionObserverEntry[], mockObserver);
       });
     }
 
@@ -72,14 +71,16 @@ describe('MageSelectView', () => {
   });
 
   it('should not trigger loadMore if hasMore is false', async () => {
-    let observerCallback: any;
+    let observerCallback: IntersectionObserverCallback | undefined;
+    const mockObserver = {
+      observe: vi.fn(),
+      unobserve: vi.fn(),
+      disconnect: vi.fn(),
+    } as unknown as IntersectionObserver;
+
     vi.spyOn(global, 'IntersectionObserver').mockImplementation((cb) => {
       observerCallback = cb;
-      return {
-        observe: vi.fn(),
-        unobserve: vi.fn(),
-        disconnect: vi.fn(),
-      } as any;
+      return mockObserver;
     });
 
     const propsWithNoMore = {
@@ -94,9 +95,10 @@ describe('MageSelectView', () => {
       input.focus();
     });
 
-    if (observerCallback) {
+    const callback = observerCallback;
+    if (callback) {
       await act(async () => {
-        observerCallback([{ isIntersecting: true }]);
+        callback([{ isIntersecting: true }] as IntersectionObserverEntry[], mockObserver);
       });
     }
 

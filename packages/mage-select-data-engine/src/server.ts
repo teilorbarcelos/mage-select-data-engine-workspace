@@ -45,7 +45,6 @@ export async function handlePrismaMageRequest<T>(
   const pageSize = options.pageSize || (typeof query.pageSize === 'string' ? parseInt(query.pageSize) : (typeof query.pageSize === 'number' ? query.pageSize : 50));
   const search = typeof query.search === 'string' ? query.search : undefined;
   
-  // Use columns from query OR searchColumns from options
   const columns = typeof query.columns === 'string' 
     ? query.columns.split(',').filter(Boolean) 
     : (options.searchColumns || []);

@@ -75,11 +75,9 @@ describe('MageSelectEngine', () => {
       getId: mockIdGetter,
     });
 
-    // Initial load
     mockFetchPage.mockResolvedValueOnce({ items: [{ id: '1' }], hasMore: true });
     await engine.initialLoad();
 
-    // Load more
     mockFetchPage.mockResolvedValueOnce({ items: [{ id: '2' }], hasMore: false });
     await engine.loadMore();
 

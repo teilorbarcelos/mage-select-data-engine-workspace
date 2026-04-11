@@ -43,17 +43,14 @@ describe('useMageSelectController', () => {
       { wrapper }
     );
     
-    // Wait for engine initialization
     await waitFor(() => {
       expect(result.current.state.initialized).toBe(true);
     });
 
-    // Should call fetchByIds with the initial ID
     await waitFor(() => {
       expect(mockFetchByIds).toHaveBeenCalledWith(['user-1']);
     });
 
-    // Check if state was updated with the hydrated object
     await waitFor(() => {
       expect(result.current.state.selectedItems).toContainEqual(fetchedUser);
     });
@@ -72,7 +69,6 @@ describe('useMageSelectController', () => {
       { wrapper }
     );
 
-    // Wait for engine initialization
     await waitFor(() => {
       expect(result.current.state.initialized).toBe(true);
     });
@@ -84,12 +80,9 @@ describe('useMageSelectController', () => {
       result.current.toggleSelection(newUser);
     });
 
-    // Check if Engine state updated (awaiting async setValue)
     await waitFor(() => {
       expect(result.current.state.selectedItems).toContainEqual(newUser);
     });
     
-    // Check if RHF value would be updated (we can't easily check RHF internal state here without more setup, 
-    // but the hook uses field.onChange which is verified by RTL integration tests usually)
   });
 });

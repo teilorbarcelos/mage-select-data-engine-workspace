@@ -11,7 +11,6 @@ export interface VanillaMageSelectProps<T, V extends 'id' | 'object' = 'id'> {
   multiple?: boolean;
   valueType?: V;
   onSelectionChange?: (items: V extends 'id' ? string[] : T[]) => void;
-  // Optional pre-configured engine instance
   engine?: MageSelectEngine<T>; 
 }
 
@@ -28,7 +27,6 @@ export function VanillaMageSelect<T, V extends 'id' | 'object' = 'id'>({
   onSelectionChange,
   engine: externalEngine
 }: VanillaMageSelectProps<T, V>) {
-  // We use the base hook from mage-react
   const { 
     state, 
     loadMore, 
@@ -37,7 +35,6 @@ export function VanillaMageSelect<T, V extends 'id' | 'object' = 'id'>({
     engine
   } = useMageSelect<T>(externalEngine || engineConfig);
 
-  // Expose selection changes based on valueType
   React.useEffect(() => {
     if (onSelectionChange) {
       if (valueType === 'id') {

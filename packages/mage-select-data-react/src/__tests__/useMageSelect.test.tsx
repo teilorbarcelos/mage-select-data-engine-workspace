@@ -52,7 +52,6 @@ describe('useMageSelect', () => {
     
     const { result } = renderHook(() => useMageSelect(config));
 
-    // Wait for initial load (useEffect) to finish
     await waitFor(() => {
       expect(result.current.state.initialized).toBe(true);
     });

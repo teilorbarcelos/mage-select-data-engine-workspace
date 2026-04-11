@@ -15,7 +15,7 @@ export interface MageSelectViewProps<T> {
   error?: string | { message?: string };
   name?: string;
   onBlur?: () => void;
-  fieldRef?: React.Ref<any>;
+  fieldRef?: React.Ref<HTMLInputElement>;
 }
 
 export function MageSelectView<T>({
@@ -45,10 +45,8 @@ export function MageSelectView<T>({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        // Only trigger onBlur and search reset if the dropdown was open
         if (isOpen) {
           if (onBlur) onBlur();
-          // Reset search when closing
           setSearchTerm('');
           setSearch('');
         }
@@ -59,7 +57,7 @@ export function MageSelectView<T>({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen, onBlur, setSearch, setSearchTerm]);
 
-  // Infinite Scroll Observer
+
   useEffect(() => {
     if (!isOpen || !hasMore || isLoading) return;
 

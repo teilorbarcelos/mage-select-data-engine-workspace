@@ -217,7 +217,6 @@ function SimpleEditForm({ initialId }: { initialId: string }) {
   );
 }
 
-// --- Vanilla (Direct Engine) Examples ---
 
 function VanillaCreateForm() {
   const [selection, setSelection] = useState<string[]>([]);

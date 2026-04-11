@@ -19,7 +19,6 @@ describe('Server Utilities', () => {
       searchColumns: ['name', 'email'],
     });
 
-    // Check findMany call
     expect(mockModel.findMany).toHaveBeenCalledWith({
       where: {
         OR: [
