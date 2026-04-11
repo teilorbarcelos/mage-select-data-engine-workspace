@@ -1,0 +1,30 @@
+{
+  "name": "mage-react",
+  "version": "1.0.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+       "types": "./dist/index.d.ts",
+       "require": "./dist/index.js",
+       "import": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "echo \"No tests yet\""
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "mage-select-data-engine": "workspace:*"
+  },
+  "devDependencies": {
+    "react": "^18.2.0",
+    "@types/react": "^18.2.0",
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.0",
+    "mage-select-data-engine": "workspace:*"
+  }
+}
