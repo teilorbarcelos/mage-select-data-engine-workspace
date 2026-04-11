@@ -3,63 +3,62 @@
 [![npm version](https://img.shields.io/npm/v/mage-select-data-engine.svg?style=flat-square)](https://www.npmjs.com/package/mage-select-data-engine)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/teilorbarcelos/mage-select-data-engine-workspace/blob/main/LICENSE)
 
-> **"An entity-aware infinite select engine. Solving the gap between IDs and rich data."**
+> **"Built for scale. The engine that makes infinite scroll in selects effortless."**
 
-## 🚨 The Problem
+## 🚨 The Problem: The Scalability Wall
 
-Most select components (and developers) treat data as simple lists. But in production, you face the **ID vs. Object Gap**:
-1. Your database uses **IDs**.
-2. Your UI needs **Objects** (Labels, Icons, Metadata).
-3. On "Edit Mode", you only have IDs, leading to **empty labels** until the user searches.
+Most select libraries work great with 50 items. But as your application grows (CRUDs, Logs, Large Catalogs), you hit the **Scalability Wall**:
+1. **Performance**: Rendering 5,000 items in a dropdown crashes the browser.
+2. **Complexity**: Implementing `IntersectionObserver`, pagination state, and search debouncing manually for every select is a nightmare.
+3. **Ghost Selections**: On "Edit Mode", when you have a selected ID that isn't in the first page of results, the label disappears.
 
-**Mage Select** bridges this gap by managing pagination, search, and **automatic entity hydration**.
+**Mage Select** handles the heavy lifting of **Dynamic Infinite Lists** while bridging the **ID vs. Object Gap**.
 
 ---
 
 ## 📦 Ecosystem
 
-| Package | Purpose | Installation |
-| :--- | :--- | :--- |
-| **`mage-select-data-engine`** | **Core Engine**. Logic, cache & pagination. | `pnpm add mage-select-data-engine` |
-| **`mage-select-data-react`** | **React Adapter**. Hooks for state sync. | `pnpm add mage-select-data-react` |
-| **`mage-select-data-rhf`** | **RHF Bridge**. Auto-hydration & Form state. | `pnpm add mage-select-data-react-hook-form` |
+| Package | Purpose |
+| :--- | :--- |
+| **`mage-select-data-engine`** | **Core Engine**. Infinite scroll logic, deduplication & pagination. |
+| **`mage-select-data-react`** | **React Adapter**. Hooks for high-performance state sync. |
+| **`mage-select-data-rhf`** | **RHF Bridge**. Auto-hydration & seamless Form integration. |
+
+---
+
+## ✨ Key Features
+
+- **🚀 Automated Infinite Scroll**: Manage offset pagination and loading states with zero boilerplate.
+- **🔍 High-Performance Search**: Debounced and cache-aware indexing.
+- **🔄 Deep Hydration**: Automatically resolves pre-selected IDs into rich objects, even if they aren't on the current page.
+- **🛡️ 100% Type-Safe**: Zero `any`. Built with strict TypeScript for senior-level stability.
 
 ---
 
 ## 🚀 Implementation Guide
 
-Choose the approach that best fits your project:
-
 <details>
-<summary><b>🔥 Option 1: React Hook Form (Recommended)</b></summary>
-<p>
-Best for productivity. Handles form state, validation, and automatic ID-to-Object hydration.
-</p>
+<summary><b>🔥 React Hook Form + Infinite Scroll</b></summary>
 
 ```tsx
 import { useMageSelectController } from 'mage-select-data-react-hook-form';
-import { useForm } from 'react-hook-form';
 
-function MyForm() {
-  const { control } = useForm({
-    defaultValues: {
-      userIds: ['user-123'] // Mage will fetch 'user-123' data automatically
-    }
-  });
-
+function MyUserSelect() {
   const { state, toggleSelection, setSearch, loadMore } = useMageSelectController({
-    name: 'userIds',
+    name: 'userId',
     control,
-    fetchPage: async (p, s) => fetchUsers(p, s),
-    fetchByIds: async (ids) => fetchUsersByIds(ids),
+    // Mage handles the page increments and search terms for you
+    fetchPage: async (page, search) => {
+      return myApi.get(`/users?page=${page}&q=${search}`);
+    },
+    fetchByIds: async (ids) => myApi.get(`/users/batch?ids=${ids.join(',')}`),
   });
 
   return (
     <MySelectView 
-      state={state} 
-      onSearch={setSearch} 
-      onLoadMore={loadMore}
-      onSelect={toggleSelection}
+      items={state.items}
+      hasMore={state.hasMore}
+      onLoadMore={loadMore} // Just trigger when the user scrolls!
     />
   );
 }
@@ -67,54 +66,16 @@ function MyForm() {
 </details>
 
 <details>
-<summary><b>⚛️ Option 2: Vanilla React (Manual Control)</b></summary>
-<p>
-Core logic for custom state management without form libraries.
-</p>
-
-```tsx
-import { useMageSelect } from 'mage-select-data-react';
-
-function SimpleSelect() {
-  const { state, toggleSelection, setSearch, loadMore } = useMageSelect({
-    fetchPage: async (p, s) => fetchItems(p, s),
-    fetchByIds: async (ids) => fetchByIds(ids),
-    initialSelectedIds: ['1'],
-  });
-
-  return (
-    <div>
-      <input onChange={(e) => setSearch(e.target.value)} />
-      <ul>
-        {state.items.map(item => (
-          <li key={item.id} onClick={() => toggleSelection(item)}>
-            {item.name} {state.selectedItems.includes(item) && '✅'}
-          </li>
-        ))}
-      </ul>
-      {state.hasMore && <button onClick={loadMore}>Load More</button>}
-    </div>
-  );
-}
-```
-</details>
-
-<details>
-<summary><b>🖥️ Option 3: Server-Side (Node/Prisma)</b></summary>
-<p>
-Zero-boilerplate backend integration.
-</p>
+<summary><b>🖥️ Server-Side (Prisma/Node)</b></summary>
+<p>Coordinate pagination on the backend with one utility.</p>
 
 ```typescript
 import { handlePrismaMageRequest } from 'mage-select-data-engine/server';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  
   return handlePrismaMageRequest(prisma.user, searchParams, {
-    searchField: 'name',
-    include: { profile: true },
-    orderBy: { createdAt: 'desc' }
+    searchField: 'name'
   });
 }
 ```
@@ -122,13 +83,8 @@ export async function GET(req: Request) {
 
 ---
 
-## ✨ Why Mage Select?
-
-- **🚀 Headless**: No CSS, no UI components. Plug it into Radix, Headless UI, or your own styles.
-- **🔄 Smart Hydration**: Automatically fecthes missing objects for your initial IDs.
-- **🔍 State-Aware Search**: Debounced and cache-aware search that doesn't reset your selection.
-- **🛡️ 100% Type-Safe**: Built with strict TypeScript. Zero `any`.
-
-## 📄 License
+## 📄 License & Mission
 
 MIT © [Teilor Barcelos](https://github.com/teilorbarcelos)
+
+Part of the [Mage Select Ecosystem](https://github.com/teilorbarcelos/mage-select-data-engine-workspace).
