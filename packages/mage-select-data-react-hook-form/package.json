@@ -1,6 +1,6 @@
 {
   "name": "mage-select-data-react-hook-form",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "React Hook Form integration for mage-select-data-engine. Effortless form synchronization and hydration.",
   "keywords": [
     "react-hook-form",

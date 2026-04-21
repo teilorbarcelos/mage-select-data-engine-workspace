@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "dev": "node scripts/dev.js",
+    "dev": "turbo run dev",
     "lint": "turbo run lint",
     "test:turbo": "turbo run test",
     "test": "vitest run",

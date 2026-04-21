@@ -17,6 +17,7 @@ export interface UseMageSelectControllerReturn<T, TFieldValues extends FieldValu
   engine: MageSelectEngine<T>;
   loadMore: () => Promise<void>;
   setSearch: (term: string) => Promise<void>;
+  setSearchFields: (fields: string[]) => void;
   toggleSelection: (item: T) => void;
   setValue: (ids: string[]) => Promise<void>;
   field: ControllerRenderProps<TFieldValues, TName>;

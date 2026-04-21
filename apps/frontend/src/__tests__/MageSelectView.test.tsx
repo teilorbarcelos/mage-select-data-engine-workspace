@@ -19,7 +19,8 @@ describe('MageSelectView', () => {
     page: 1,
     initialized: true,
     error: undefined,
-    search: ''
+    search: '',
+    searchFields: []
   };
 
   const defaultProps = {

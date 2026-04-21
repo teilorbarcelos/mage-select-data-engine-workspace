@@ -80,4 +80,61 @@ describe('Server Utilities', () => {
       }
     }));
   });
+
+  it('should handle custom parameter mappings', async () => {
+    const mockModel: PrismaModel<{ id: string; name: string }> = {
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
+    };
+
+    const query = {
+      searchWord: 'alice',
+      searchFields: 'name,email',
+      size: '20',
+    };
+
+    await handlePrismaMageRequest(mockModel, query, {
+      mappings: {
+        search: 'searchWord',
+        columns: 'searchFields',
+        pageSize: 'size',
+      },
+    });
+
+    expect(mockModel.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        OR: [
+          { name: { contains: 'alice' } },
+          { email: { contains: 'alice' } },
+        ],
+      },
+      take: 21,
+    }));
+  });
+
+  it('should handle custom startPage (e.g. 0-indexed)', async () => {
+    const mockModel: PrismaModel<{ id: string; name: string }> = {
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
+    };
+
+    const query = { page: '0', pageSize: '10' };
+
+    await handlePrismaMageRequest(mockModel, query, {
+      startPage: 0,
+    });
+
+    expect(mockModel.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      skip: 0,
+      take: 11,
+    }));
+
+    await handlePrismaMageRequest(mockModel, { page: '1', pageSize: '10' }, {
+      startPage: 0,
+    });
+
+    expect(mockModel.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      skip: 10,
+    }));
+  });
 });

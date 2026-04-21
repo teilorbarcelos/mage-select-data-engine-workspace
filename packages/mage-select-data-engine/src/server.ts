@@ -1,10 +1,19 @@
-export interface MageServerRequest {
+export interface MageServerRequest extends Record<string, unknown> {
   page?: string | number | string[] | unknown;
-  search?: string | string[] | unknown;
+  search?: string | number | string[] | unknown;
   columns?: string | string[] | unknown;
   pageSize?: string | number | string[] | unknown;
   sort?: string | string[] | unknown;
   order?: 'asc' | 'desc' | string | unknown;
+}
+
+export interface MageRequestMappings {
+  page?: string;
+  pageSize?: string;
+  search?: string;
+  columns?: string;
+  sort?: string;
+  order?: string;
 }
 
 export interface MageHydrationRequest {
@@ -39,18 +48,36 @@ export async function handlePrismaMageRequest<T>(
     where?: Record<string, unknown>;
     select?: Record<string, boolean>;
     searchFields?: string | string[];
+    mappings?: MageRequestMappings;
+    startPage?: number;
   } = {}
 ) {
-  const page = Math.max(1, typeof query.page === 'string' ? parseInt(query.page) : (typeof query.page === 'number' ? query.page : 1));
-  const pageSize = options.pageSize || (typeof query.pageSize === 'string' ? parseInt(query.pageSize) : (typeof query.pageSize === 'number' ? query.pageSize : 50));
-  const search = typeof query.search === 'string' ? query.search : undefined;
+  const { mappings = {}, startPage = 1 } = options;
+
+  const getParam = (key: keyof MageRequestMappings, defaultKey: string) => {
+    const mappedKey = mappings[key] || defaultKey;
+    return query[mappedKey];
+  };
+
+  const pageVal = getParam('page', 'page');
+  const page = Math.max(startPage, typeof pageVal === 'string' ? parseInt(pageVal) : (typeof pageVal === 'number' ? pageVal : startPage));
   
-  const columns = typeof query.columns === 'string' 
-    ? query.columns.split(',').filter(Boolean) 
+  const pageSizeVal = getParam('pageSize', 'pageSize');
+  const pageSize = options.pageSize || (typeof pageSizeVal === 'string' ? parseInt(pageSizeVal) : (typeof pageSizeVal === 'number' ? pageSizeVal : 50));
+  
+  const searchVal = getParam('search', 'search');
+  const search = typeof searchVal === 'string' || typeof searchVal === 'number' ? String(searchVal) : undefined;
+  
+  const columnsVal = getParam('columns', 'columns');
+  const columns = typeof columnsVal === 'string' 
+    ? columnsVal.split(',').filter(Boolean) 
     : (typeof options.searchFields === 'string' ? [options.searchFields] : (options.searchFields || []));
 
-  const sort = typeof query.sort === 'string' ? query.sort : undefined;
-  const order = (query.order === 'asc' || query.order === 'desc') ? query.order : 'asc';
+  const sortVal = getParam('sort', 'sort');
+  const sort = typeof sortVal === 'string' ? sortVal : undefined;
+  
+  const orderVal = getParam('order', 'order');
+  const order = (orderVal === 'asc' || orderVal === 'desc') ? orderVal : 'asc';
 
   let whereClause = options.where || {};
 
@@ -79,7 +106,7 @@ export async function handlePrismaMageRequest<T>(
   const items = await prismaModel.findMany({
     where: whereClause,
     take: pageSize + 1,
-    skip: (page - 1) * pageSize,
+    skip: (page - startPage) * pageSize,
     orderBy,
     select: options.select,
   });

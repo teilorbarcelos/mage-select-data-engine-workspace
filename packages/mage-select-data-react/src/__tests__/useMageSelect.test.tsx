@@ -61,6 +61,6 @@ describe('useMageSelect', () => {
     });
 
     expect(result.current.state.search).toBe('new search');
-    expect(mockFetchPage).toHaveBeenCalledWith(1, 'new search');
+    expect(mockFetchPage).toHaveBeenCalledWith(1, 'new search', { searchFields: [] });
   });
 });
