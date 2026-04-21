@@ -65,6 +65,7 @@ describe('MageSelectEngine', () => {
   });
 
   it('should reset page and items when searching', async () => {
+    vi.useFakeTimers();
     const engine = new MageSelectEngine({
       fetchPage: mockFetchPage,
       fetchByIds: vi.fn(),
@@ -73,11 +74,13 @@ describe('MageSelectEngine', () => {
 
     mockFetchPage.mockResolvedValue({ items: [], hasMore: false });
 
-    await engine.setSearch('test');
+    engine.setSearch('test');
+    await vi.advanceTimersByTimeAsync(300);
     
     expect(engine.getState().search).toBe('test');
     expect(engine.getState().page).toBe(1);
     expect(mockFetchPage).toHaveBeenCalledWith(1, 'test', { searchFields: [] });
+    vi.useRealTimers();
   });
 
   it('should pass searchFields to fetchPage', async () => {

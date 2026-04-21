@@ -28,6 +28,7 @@ export class MageSelectEngine<T> {
   private cache = new Map<string, T>();
   private listeners: Set<Listener<T>> = new Set();
   private config: MageSelectEngineConfig<T>;
+  private searchTimeout: ReturnType<typeof setTimeout> | undefined;
 
   constructor(config: MageSelectEngineConfig<T>) {
     this.config = config;
@@ -86,16 +87,21 @@ export class MageSelectEngine<T> {
   public async setSearch(term: string) {
     if (this.state.search === term) return;
     
-    this.updateState({
-      search: term,
-      page: this.config.startPage ?? 1,
-      items: [],
-      hasMore: true,
-      initialized: false,
-      error: undefined,
-    });
-    
-    await this.initialLoad();
+    this.updateState({ search: term });
+
+    if (this.searchTimeout) clearTimeout(this.searchTimeout);
+
+    this.searchTimeout = setTimeout(async () => {
+      this.updateState({
+        page: this.config.startPage ?? 1,
+        items: [],
+        hasMore: true,
+        initialized: false,
+        error: undefined,
+      });
+      
+      await this.initialLoad();
+    }, 300);
   }
 
   public async initialLoad() {

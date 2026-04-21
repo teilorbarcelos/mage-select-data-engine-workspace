@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { useMageSelect } from '../index';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { MageSelectEngine } from 'mage-select-data-engine';
+import { describe, expect, it, vi } from 'vitest';
+import { useMageSelect } from '../index';
 
 interface TestItem {
   id: string;
@@ -11,7 +11,7 @@ interface TestItem {
 describe('useMageSelect', () => {
   const mockFetchPage = vi.fn().mockResolvedValue({ items: [], totalCount: 0, hasMore: false });
   const mockIdGetter = (item: TestItem) => item.id;
-
+  
   it('should initialize with engine state', async () => {
     const config = { fetchPage: mockFetchPage, fetchByIds: vi.fn(), getId: mockIdGetter };
     const { result } = renderHook(() => useMageSelect(config));
@@ -55,12 +55,16 @@ describe('useMageSelect', () => {
     await waitFor(() => {
       expect(result.current.state.initialized).toBe(true);
     });
-
+    vi.useFakeTimers();
+    
     await act(async () => {
-      await result.current.setSearch('new search');
+      result.current.setSearch('new search');
+      await vi.advanceTimersByTimeAsync(300);
     });
 
     expect(result.current.state.search).toBe('new search');
     expect(mockFetchPage).toHaveBeenCalledWith(1, 'new search', { searchFields: [] });
+    
+    vi.useRealTimers();
   });
 });
