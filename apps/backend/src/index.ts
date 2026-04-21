@@ -13,10 +13,9 @@ app.get('/users', async (req, res) => {
   try {
     const result = await handlePrismaMageRequest(prisma.user, req.query, {
       orderBy: { name: 'asc' },
-      startPage: 0,
+      searchFields: ['name', 'email'], // Define default fields to search
       mappings: {
-        search: 'searchWord',
-        pageSize: 'size',
+        pageSize: 'size', // Frontend sends 'size' instead of 'pageSize'
       }
     });
     res.json(result);

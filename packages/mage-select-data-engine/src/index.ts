@@ -1,10 +1,11 @@
 export interface MageSelectEngineConfig<T> {
-  fetchPage: (page: number, search: string, options: { searchFields?: string[] }) => Promise<{ items: T[]; hasMore: boolean }>;
+  fetchPage: (page: number, search: string, options: { searchFields?: string[]; signal?: AbortSignal }) => Promise<{ items: T[]; hasMore: boolean }>;
   fetchByIds: (ids: string[]) => Promise<T[]>;
   getId: (item: T) => string;
   pageSize?: number;
   searchFields?: string[];
   startPage?: number;
+  cacheLimit?: number;
 }
 
 export interface MageSelectEngineState<T> {
@@ -29,6 +30,7 @@ export class MageSelectEngine<T> {
   private listeners: Set<Listener<T>> = new Set();
   private config: MageSelectEngineConfig<T>;
   private searchTimeout: ReturnType<typeof setTimeout> | undefined;
+  private abortController: AbortController | null = null;
 
   constructor(config: MageSelectEngineConfig<T>) {
     this.config = config;
@@ -74,13 +76,32 @@ export class MageSelectEngine<T> {
   }
 
   private updateState(partial: Partial<MageSelectEngineState<T>>) {
-    this.state = { ...this.state, ...partial };
+    const newState = { ...this.state, ...partial };
+    
+    const hasChanged = Object.keys(partial).some(
+      (key) => this.state[key as keyof MageSelectEngineState<T>] !== newState[key as keyof MageSelectEngineState<T>]
+    );
+
+    if (!hasChanged) return;
+
+    this.state = newState;
     this.notify();
   }
 
   private persistToCache(items: T[]) {
     for (const item of items) {
       this.cache.set(this.config.getId(item), item);
+    }
+
+    if (this.config.cacheLimit && this.cache.size > this.config.cacheLimit) {
+      const entriesToRemove = this.cache.size - this.config.cacheLimit;
+      const keys = this.cache.keys();
+      for (let i = 0; i < entriesToRemove; i++) {
+        const key = keys.next().value;
+        if (key !== undefined) {
+          this.cache.delete(key);
+        }
+      }
     }
   }
 
@@ -90,6 +111,10 @@ export class MageSelectEngine<T> {
     this.updateState({ search: term });
 
     if (this.searchTimeout) clearTimeout(this.searchTimeout);
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
 
     this.searchTimeout = setTimeout(async () => {
       this.updateState({
@@ -105,11 +130,19 @@ export class MageSelectEngine<T> {
   }
 
   public async initialLoad() {
-    if (this.state.initialized || this.state.isLoading) return;
+    if (this.state.isLoading) return;
+    
+    if (this.abortController) {
+      this.abortController.abort();
+    }
+    this.abortController = new AbortController();
+
+    const signal = this.abortController.signal;
     this.updateState({ isLoading: true });
     try {
       const response = await this.config.fetchPage(this.state.page, this.state.search, {
         searchFields: this.state.searchFields,
+        signal,
       });
       this.persistToCache(response.items);
       this.updateState({
@@ -119,17 +152,35 @@ export class MageSelectEngine<T> {
         initialized: true,
       });
     } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') {
+        if (this.abortController?.signal === signal) {
+          this.updateState({ isLoading: false });
+        }
+        return;
+      }
       this.updateState({ isLoading: false, error: String(e) });
+    } finally {
+      if (this.abortController?.signal === signal) {
+        this.abortController = null;
+      }
     }
   }
 
   public async loadMore() {
     if (this.state.isLoading || !this.state.hasMore) return;
+
+    if (this.abortController) {
+      this.abortController.abort();
+    }
+    this.abortController = new AbortController();
+
+    const signal = this.abortController.signal;
     this.updateState({ isLoading: true });
     try {
       const nextPage = this.state.page + 1;
       const response = await this.config.fetchPage(nextPage, this.state.search, {
         searchFields: this.state.searchFields,
+        signal,
       });
       this.persistToCache(response.items);
       
@@ -145,7 +196,17 @@ export class MageSelectEngine<T> {
         isLoading: false,
       });
     } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') {
+        if (this.abortController?.signal === signal) {
+          this.updateState({ isLoading: false });
+        }
+        return;
+      }
       this.updateState({ isLoading: false, error: String(e) });
+    } finally {
+      if (this.abortController?.signal === signal) {
+        this.abortController = null;
+      }
     }
   }
 
@@ -161,7 +222,6 @@ export class MageSelectEngine<T> {
       try {
         const fetchedItems = await this.config.fetchByIds(missingIds);
         this.persistToCache(fetchedItems);
-        this.updateState({ isHydrating: false, error: undefined });
       } catch (e) {
         this.updateState({ isHydrating: false, error: String(e) });
         return;
@@ -172,7 +232,7 @@ export class MageSelectEngine<T> {
       .map((id) => this.cache.get(id)!)
       .filter(Boolean);
 
-    this.updateState({ selectedItems });
+    this.updateState({ selectedItems, isHydrating: false, error: undefined });
   }
 
   public setSearchFields(fields: string[]) {

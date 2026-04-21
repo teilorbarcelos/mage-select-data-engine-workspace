@@ -22,19 +22,13 @@ const engineConfig: MageSelectEngineConfig<User> = {
   fetchPage: async (page: number, search: string, options) => {
     const url = new URL('http://localhost:8888/users');
     url.searchParams.set('page', page.toString());
+    url.searchParams.set('size', '10');
     
-    /* Demonstrate custom parameter names supported by the new backend mappings */
     if (search) {
-      url.searchParams.set('searchWord', search);
-      url.searchParams.set('size', '10');
-      
-      /* Use the dynamic search fields from engine state */
-      if (options.searchFields?.length) {
-        url.searchParams.set('searchFields', options.searchFields.join(','));
-      }
+      url.searchParams.set('search', search);
     }
     
-    const res = await fetch(url.toString());
+    const res = await fetch(url.toString(), { signal: options.signal });
     return res.json();
   },
   fetchByIds: async (ids) => {
@@ -42,8 +36,6 @@ const engineConfig: MageSelectEngineConfig<User> = {
     return res.json();
   },
   getId: (user) => user.id,
-  startPage: 0, // Match the backend's 0-indexed pagination
-  searchFields: ['name'], // Initial search fields
 };
 
 function CreateForm() {

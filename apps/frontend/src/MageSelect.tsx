@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { MageSelectEngine, MageSelectEngineConfig } from 'mage-select-data-engine';
 import { useMageSelectController } from 'mage-select-data-react-hook-form';
 import { Control, FieldValues, Path, PathValue, UseControllerProps } from 'react-hook-form';
@@ -17,11 +17,6 @@ export interface MageSelectProps<T, TFieldValues extends FieldValues, TName exte
   defaultValue?: PathValue<TFieldValues, TName>;
 }
 
-/**
- * MageSelect - React Hook Form Wrapper
- * 
- * High-level component that connects the MageSelectEngine to RHF.
- */
 export function MageSelect<T, TFieldValues extends FieldValues, TName extends Path<TFieldValues>>(
   props: MageSelectProps<T, TFieldValues, TName>
 ) {
@@ -32,8 +27,49 @@ export function MageSelect<T, TFieldValues extends FieldValues, TName extends Pa
     setSearch, 
     field, 
     fieldState,
-    engine, // We get back the resolved engine instance
+    engine,
+    initialLoad,
+    setValue,
   } = useMageSelectController<T, TFieldValues, TName>(props);
+
+  const { value } = field;
+  const { valueType = 'id' } = props;
+
+  /** Track the last processed RHF value to prevent loops */
+  const lastProcessedValueKeyRef = useRef<string | null>(null);
+
+  /** 1. Initial Load */
+  useEffect(() => {
+    initialLoad();
+  }, [initialLoad]);
+
+  /** 2. Sync RHF value -> Engine (Hydration & External Changes) */
+  useEffect(() => {
+    const valueArray = (Array.isArray(value) ? value : (value ? [value] : [])) as (T | string)[];
+    const incomingIds = valueType === 'object' 
+      ? valueArray.filter(Boolean).map((v) => engine.getId(v as T))
+      : valueArray.filter(Boolean).map(String);
+
+    const incomingIdsKey = [...incomingIds].sort().join(',');
+    
+    /** Skip if this change was already processed by toggleSelection or a previous effect */
+    if (incomingIdsKey === lastProcessedValueKeyRef.current) {
+      return;
+    }
+
+    const currentSelectedIds = state.selectedItems.map(item => engine.getId(item));
+    const currentIdsKey = [...currentSelectedIds].sort().join(',');
+
+    if (incomingIdsKey !== currentIdsKey && !state.isHydrating) {
+      lastProcessedValueKeyRef.current = incomingIdsKey;
+      setValue(incomingIds);
+    }
+  }, [value, valueType, engine, state.selectedItems, state.isHydrating, setValue]);
+
+  /**
+   * Note: Selection -> RHF sync is now handled directly in useMageSelectController.toggleSelection
+   * for immediate feedback and reliable RHF validation.
+   */
 
   return (
     <MageSelectView

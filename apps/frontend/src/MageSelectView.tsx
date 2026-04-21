@@ -59,7 +59,7 @@ export function MageSelectView<T>({
 
 
   useEffect(() => {
-    if (!isOpen || !hasMore || isLoading) return;
+    if (!isOpen || !hasMore || isLoading || stateError) return;
 
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
@@ -81,7 +81,7 @@ export function MageSelectView<T>({
       }
       observer.disconnect();
     };
-  }, [isOpen, hasMore, isLoading, loadMore]);
+  }, [isOpen, hasMore, isLoading, loadMore, stateError]);
 
   const handleSearchChange = (term: string) => {
     setSearchTerm(term);
@@ -169,7 +169,7 @@ export function MageSelectView<T>({
                 {isLoading && <div className="spinner-mini" style={{ margin: '0 auto' }} />}
               </li>
             )}
-            {!isLoading && items.length === 0 && (
+            {!isLoading && items.length === 0 && !hasMore && (
               <li className="mage-select-no-results">No results found</li>
             )}
           </ul>
