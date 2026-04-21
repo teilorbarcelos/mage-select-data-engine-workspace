@@ -1,6 +1,6 @@
 {
   "name": "mage-select-data-react",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "React adapter for mage-select-data-engine. High-performance hooks for state synchronization.",
   "keywords": [
     "react",
