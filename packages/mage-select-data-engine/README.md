@@ -63,9 +63,13 @@ function MyUserSelect() {
     name: 'userId',
     control,
     // Mage handles the page increments and search terms for you
-    fetchPage: async (page, search) => {
-      return myApi.get(`/users?page=${page}&q=${search}`); // { items: T[], hasMore: boolean }
+    fetchPage: async (page, search, options) => {
+      // options.searchFields is available here!
+      const fields = options.searchFields?.join(',') || 'name';
+      return myApi.get(`/users?page=${page}&searchWord=${search}&searchFields=${fields}`); 
     },
+    searchFields: ['name'],
+    startPage: 0, // Backend uses 0-indexed pagination
     fetchByIds: async (ids) => myApi.get(`/users/batch?ids=${ids.join(',')}`),
   });
 
@@ -139,11 +143,45 @@ export async function GET(req: Request) {
   // Handles pagination and search parameters across multiple fields automatically
   return handlePrismaMageRequest(prisma.user, searchParams, {
     searchFields: ['name', 'email'], // Multiple fields support!
+    startPage: 0, // Backend starts at page 0
+    mappings: {
+      search: 'searchWord',
+      columns: 'searchFields',
+      pageSize: 'size'
+    },
     include: { profile: true }
   });
 }
 ```
 </details>
+
+---
+
+## 🛠 Advanced Configuration
+
+### Engine Options (Frontend)
+
+| Property | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `startPage` | `number` | `1` | The starting page index (e.g., set `0` for 0-indexed backends). |
+| `searchFields` | `string[]` | `[]` | List of fields to be searched by the backend. |
+
+### Server Helper Options (Backend)
+
+| Property | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `startPage` | `number` | `1` | Should match the frontend `startPage`. |
+| `mappings` | `MageRequestMappings` | `undefined` | Map internal keys to your URL parameter names. |
+
+**Mappings Example:**
+```typescript
+mappings: {
+  page: 'p',
+  pageSize: 'limit',
+  search: 'q',
+  columns: 'fields'
+}
+```
 
 ---
 

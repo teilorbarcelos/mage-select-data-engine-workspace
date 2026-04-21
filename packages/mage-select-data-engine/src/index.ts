@@ -1,8 +1,10 @@
 export interface MageSelectEngineConfig<T> {
-  fetchPage: (page: number, search: string) => Promise<{ items: T[]; hasMore: boolean }>;
+  fetchPage: (page: number, search: string, options: { searchFields?: string[] }) => Promise<{ items: T[]; hasMore: boolean }>;
   fetchByIds: (ids: string[]) => Promise<T[]>;
   getId: (item: T) => string;
   pageSize?: number;
+  searchFields?: string[];
+  startPage?: number;
 }
 
 export interface MageSelectEngineState<T> {
@@ -12,6 +14,7 @@ export interface MageSelectEngineState<T> {
   isHydrating: boolean;
   page: number;
   search: string;
+  searchFields: string[];
   hasMore: boolean;
   error?: string;
   initialized: boolean;
@@ -20,16 +23,7 @@ export interface MageSelectEngineState<T> {
 type Listener<T> = (state: MageSelectEngineState<T>) => void;
 
 export class MageSelectEngine<T> {
-  private state: MageSelectEngineState<T> = {
-    items: [],
-    selectedItems: [],
-    isLoading: false,
-    isHydrating: false,
-    hasMore: true,
-    page: 1,
-    search: '',
-    initialized: false,
-  };
+  private state: MageSelectEngineState<T>;
 
   private cache = new Map<string, T>();
   private listeners: Set<Listener<T>> = new Set();
@@ -37,6 +31,17 @@ export class MageSelectEngine<T> {
 
   constructor(config: MageSelectEngineConfig<T>) {
     this.config = config;
+    this.state = {
+      items: [],
+      selectedItems: [],
+      isLoading: false,
+      isHydrating: false,
+      hasMore: true,
+      page: config.startPage ?? 1,
+      search: '',
+      searchFields: config.searchFields ?? [],
+      initialized: false,
+    };
   }
 
   /**
@@ -83,7 +88,7 @@ export class MageSelectEngine<T> {
     
     this.updateState({
       search: term,
-      page: 1,
+      page: this.config.startPage ?? 1,
       items: [],
       hasMore: true,
       initialized: false,
@@ -97,7 +102,9 @@ export class MageSelectEngine<T> {
     if (this.state.initialized || this.state.isLoading) return;
     this.updateState({ isLoading: true });
     try {
-      const response = await this.config.fetchPage(this.state.page, this.state.search);
+      const response = await this.config.fetchPage(this.state.page, this.state.search, {
+        searchFields: this.state.searchFields,
+      });
       this.persistToCache(response.items);
       this.updateState({
         items: response.items,
@@ -115,7 +122,9 @@ export class MageSelectEngine<T> {
     this.updateState({ isLoading: true });
     try {
       const nextPage = this.state.page + 1;
-      const response = await this.config.fetchPage(nextPage, this.state.search);
+      const response = await this.config.fetchPage(nextPage, this.state.search, {
+        searchFields: this.state.searchFields,
+      });
       this.persistToCache(response.items);
       
       const existingIds = new Set(this.state.items.map(this.config.getId));
@@ -158,6 +167,20 @@ export class MageSelectEngine<T> {
       .filter(Boolean);
 
     this.updateState({ selectedItems });
+  }
+
+  public setSearchFields(fields: string[]) {
+    this.updateState({
+      searchFields: fields,
+      page: this.config.startPage ?? 1,
+      items: [],
+      hasMore: true,
+      initialized: false,
+    });
+    
+    if (this.state.search) {
+      this.initialLoad();
+    }
   }
 
   public toggleSelection(item: T) {

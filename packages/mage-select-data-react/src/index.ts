@@ -34,6 +34,7 @@ export function useMageSelect<T>(
     engine,
     loadMore: () => engine.loadMore(),
     setSearch: (term: string) => engine.setSearch(term),
+    setSearchFields: (fields: string[]) => engine.setSearchFields(fields),
     toggleSelection: (item: T) => engine.toggleSelection(item),
     setValue: (ids: string[]) => engine.setValue(ids),
   };

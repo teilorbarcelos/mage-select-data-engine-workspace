@@ -25,7 +25,19 @@ describe('MageSelectEngine', () => {
     expect(state.items).toEqual([]);
     expect(state.isLoading).toBe(false);
     expect(state.search).toBe('');
+    expect(state.searchFields).toEqual([]);
     expect(state.page).toBe(1);
+  });
+
+  it('should initialize with custom startPage', () => {
+    const engine = new MageSelectEngine({
+      fetchPage: mockFetchPage,
+      fetchByIds: vi.fn(),
+      getId: mockIdGetter,
+      startPage: 0,
+    });
+
+    expect(engine.getState().page).toBe(0);
   });
 
   it('should perform initial load correctly', async () => {
@@ -49,7 +61,7 @@ describe('MageSelectEngine', () => {
     const state = engine.getState();
     expect(state.items).toEqual(mockData.items);
     expect(state.isLoading).toBe(false);
-    expect(mockFetchPage).toHaveBeenCalledWith(1, '');
+    expect(mockFetchPage).toHaveBeenCalledWith(1, '', { searchFields: [] });
   });
 
   it('should reset page and items when searching', async () => {
@@ -65,7 +77,21 @@ describe('MageSelectEngine', () => {
     
     expect(engine.getState().search).toBe('test');
     expect(engine.getState().page).toBe(1);
-    expect(mockFetchPage).toHaveBeenCalledWith(1, 'test');
+    expect(mockFetchPage).toHaveBeenCalledWith(1, 'test', { searchFields: [] });
+  });
+
+  it('should pass searchFields to fetchPage', async () => {
+    const engine = new MageSelectEngine({
+      fetchPage: mockFetchPage,
+      fetchByIds: vi.fn(),
+      getId: mockIdGetter,
+      searchFields: ['name', 'email'],
+    });
+
+    mockFetchPage.mockResolvedValue({ items: [], hasMore: false });
+    await engine.initialLoad();
+
+    expect(mockFetchPage).toHaveBeenCalledWith(1, '', { searchFields: ['name', 'email'] });
   });
 
   it('should load more items correctly', async () => {
