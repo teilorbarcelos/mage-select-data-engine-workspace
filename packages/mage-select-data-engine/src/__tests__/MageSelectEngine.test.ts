@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MageSelectEngine } from '../index';
+import { MageSelectEngine, createMageSelectEngine } from '../index';
 
 interface TestItem {
   id: string;
@@ -213,5 +213,56 @@ describe('MageSelectEngine', () => {
 
     await engine.setValue(['1']);
     expect(mockFetchByIds).toHaveBeenCalledWith(['1']);
+  });
+
+  it('should support setSearchFields', async () => {
+    const engine = new MageSelectEngine({
+      fetchPage: mockFetchPage,
+      fetchByIds: vi.fn(),
+      getId: mockIdGetter,
+    });
+
+    mockFetchPage.mockResolvedValue({ items: [], hasMore: false });
+    
+    engine.setSearchFields(['email']);
+    expect(engine.getState().searchFields).toEqual(['email']);
+    expect(engine.getState().initialized).toBe(false);
+
+    engine.setSearch('test');
+    engine.setSearchFields(['name']);
+    expect(mockFetchPage).toHaveBeenCalled();
+  });
+
+  it('should have a factory function', () => {
+    const engine = createMageSelectEngine({
+      fetchPage: mockFetchPage,
+      fetchByIds: vi.fn(),
+      getId: mockIdGetter,
+    });
+    expect(engine).toBeInstanceOf(MageSelectEngine);
+  });
+
+  it('should handle loadMore errors', async () => {
+    const engine = new MageSelectEngine({
+      fetchPage: mockFetchPage,
+      fetchByIds: vi.fn(),
+      getId: mockIdGetter,
+    });
+    mockFetchPage.mockResolvedValueOnce({ items: [], hasMore: true });
+    await engine.initialLoad();
+    
+    mockFetchPage.mockRejectedValueOnce(new Error('Load more failed'));
+    await engine.loadMore();
+    expect(engine.getState().error).toBe('Error: Load more failed');
+  });
+
+  it('should handle empty setValue', async () => {
+    const engine = new MageSelectEngine({
+      fetchPage: mockFetchPage,
+      fetchByIds: vi.fn(),
+      getId: mockIdGetter,
+    });
+    await engine.setValue([]);
+    expect(engine.getState().selectedItems).toEqual([]);
   });
 });
