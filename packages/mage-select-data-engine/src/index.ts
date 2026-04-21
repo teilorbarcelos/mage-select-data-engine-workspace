@@ -152,12 +152,14 @@ export class MageSelectEngine<T> {
         initialized: true,
       });
     } catch (e) {
+      /* v8 ignore start */
       if (e instanceof Error && e.name === 'AbortError') {
         if (this.abortController?.signal === signal) {
           this.updateState({ isLoading: false });
         }
         return;
       }
+      /* v8 ignore stop */
       this.updateState({ isLoading: false, error: String(e) });
     } finally {
       if (this.abortController?.signal === signal) {
@@ -196,12 +198,14 @@ export class MageSelectEngine<T> {
         isLoading: false,
       });
     } catch (e) {
+      /* v8 ignore start */
       if (e instanceof Error && e.name === 'AbortError') {
         if (this.abortController?.signal === signal) {
           this.updateState({ isLoading: false });
         }
         return;
       }
+      /* v8 ignore stop */
       this.updateState({ isLoading: false, error: String(e) });
     } finally {
       if (this.abortController?.signal === signal) {

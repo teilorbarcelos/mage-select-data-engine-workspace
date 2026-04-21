@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { handlePrismaMageRequest, PrismaModel } from '../server';
+import { handlePrismaMageHydration, handlePrismaMageRequest, PrismaModel } from '../server';
 
 describe('Server Utilities', () => {
   it('should generate correct prisma arguments for search and pagination', async () => {
@@ -33,7 +33,7 @@ describe('Server Utilities', () => {
     });
 
     expect(result.items).toHaveLength(1);
-    expect(result.hasMore).toBe(false); // page 2 of count 10 with pageSize 10
+    expect(result.hasMore).toBe(false);
   });
 
   it('should handle custom orderBy and select', async () => {
@@ -136,5 +136,93 @@ describe('Server Utilities', () => {
     expect(mockModel.findMany).toHaveBeenCalledWith(expect.objectContaining({
       skip: 10,
     }));
+  });
+
+  it('should handle complex where clauses with search', async () => {
+    const mockModel: PrismaModel<{ id: string }> = {
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
+    };
+
+    await handlePrismaMageRequest(mockModel, { search: 'alice' }, {
+      where: { active: true },
+      searchFields: ['name']
+    });
+
+    expect(mockModel.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        AND: [
+          { active: true },
+          { OR: [{ name: { contains: 'alice' } }] }
+        ]
+      }
+    }));
+  });
+
+  it('should handle handlePrismaMageHydration', async () => {
+    const mockModel: PrismaModel<{ id: string }> = {
+      findMany: vi.fn().mockResolvedValue([{ id: '1' }, { id: '2' }]),
+      count: vi.fn().mockResolvedValue(0),
+    };
+
+    expect(await handlePrismaMageHydration(mockModel, { ids: null as any })).toEqual([]);
+    expect(await handlePrismaMageHydration(mockModel, { ids: '' })).toEqual([]);
+
+    const result = await handlePrismaMageHydration(mockModel, { ids: '1,2' });
+    expect(mockModel.findMany).toHaveBeenCalledWith({
+      where: { id: { in: ['1', '2'] } }
+    });
+    expect(result).toHaveLength(2);
+  });
+
+  it('should handle hasMore correctly when items > pageSize', async () => {
+    const mockModel: PrismaModel<{ id: string }> = {
+      findMany: vi.fn().mockResolvedValue([{ id: '1' }, { id: '2' }]),
+      count: vi.fn().mockResolvedValue(2),
+    };
+
+    const result = await handlePrismaMageRequest(mockModel, { page: '1' }, {
+      pageSize: 1
+    });
+
+    expect(result.items).toHaveLength(1);
+    expect(result.hasMore).toBe(true);
+  });
+
+  it('should handle sort and order parameters', async () => {
+    const mockModel: PrismaModel<{ id: string; name: string }> = {
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
+    };
+
+    await handlePrismaMageRequest(mockModel, { sort: 'name', order: 'desc' });
+
+    expect(mockModel.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      orderBy: { name: 'desc' }
+    }));
+  });
+
+  it('should handle mapping edge cases in server', async () => {
+    const mockModel: PrismaModel<{ id: string }> = {
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
+    };
+
+    // Test with number page and pageSize
+    await handlePrismaMageRequest(mockModel, { page: 2, pageSize: 5 } as any);
+    expect(mockModel.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      skip: 5,
+      take: 6
+    }));
+
+    // Test with searchFields as string (line 74 branch)
+    await handlePrismaMageRequest(mockModel, { search: 'test' }, { searchFields: 'name' });
+    expect(mockModel.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { OR: [{ name: { contains: 'test' } }] }
+    }));
+
+    // Test with searchFields as undefined
+    await handlePrismaMageRequest(mockModel, { search: 'test' });
+    expect(mockModel.findMany).toHaveBeenCalled();
   });
 });

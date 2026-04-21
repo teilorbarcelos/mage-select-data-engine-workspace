@@ -48,7 +48,10 @@ export function useMageSelectController<T, TFieldValues extends FieldValues, TNa
   const { engine } = engineHook;
 
   const toggleSelection = useCallback((item: T) => {
-    if (!multiple) {
+    const currentIds = engine.getState().selectedItems.map(i => engine.getId(i));
+    const isSelected = currentIds.includes(engine.getId(item));
+
+    if (!multiple && !isSelected) {
       engine.setValue([]);
     }
     
