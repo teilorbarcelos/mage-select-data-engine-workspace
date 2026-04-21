@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { useMageSelect } from '../index';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { MageSelectEngine } from 'mage-select-data-engine';
+import { describe, expect, it, vi } from 'vitest';
+import { useMageSelect } from '../index';
 
 interface TestItem {
   id: string;
@@ -52,12 +52,9 @@ describe('useMageSelect', () => {
     
     const { result } = renderHook(() => useMageSelect(config));
 
-    // Wait for initial load with real timers
     await waitFor(() => {
       expect(result.current.state.initialized).toBe(true);
     });
-
-    // Now switch to fake timers for debounce test
     vi.useFakeTimers();
     
     await act(async () => {
