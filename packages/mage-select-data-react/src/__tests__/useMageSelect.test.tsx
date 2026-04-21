@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { MageSelectEngine } from 'mage-select-data-engine';
+import { MageSelectEngine, MageSelectEngineConfig } from 'mage-select-data-engine';
 import { describe, expect, it, vi } from 'vitest';
 import { useMageSelect } from '../index';
 
@@ -16,6 +16,10 @@ describe('useMageSelect', () => {
     const config = { fetchPage: mockFetchPage, fetchByIds: vi.fn(), getId: mockIdGetter };
     const { result } = renderHook(() => useMageSelect(config));
 
+    act(() => {
+      result.current.initialLoad();
+    });
+
     await waitFor(() => {
       expect(result.current.state.initialized).toBe(true);
     });
@@ -26,6 +30,10 @@ describe('useMageSelect', () => {
   it('should accept an existing engine instance', async () => {
     const engine = new MageSelectEngine({ fetchPage: mockFetchPage, fetchByIds: vi.fn(), getId: mockIdGetter });
     const { result } = renderHook(() => useMageSelect(engine));
+
+    act(() => {
+      result.current.initialLoad();
+    });
 
     await waitFor(() => {
       expect(result.current.state.initialized).toBe(true);
@@ -41,6 +49,10 @@ describe('useMageSelect', () => {
     const config = { fetchPage: mockFetchPage, fetchByIds: vi.fn(), getId: mockIdGetter };
     const { result } = renderHook(() => useMageSelect(config));
 
+    act(() => {
+      result.current.initialLoad();
+    });
+
     await waitFor(() => {
       expect(result.current.state.items).toEqual(mockData.items);
     });
@@ -51,6 +63,10 @@ describe('useMageSelect', () => {
     mockFetchPage.mockResolvedValue({ items: [], hasMore: false });
     
     const { result } = renderHook(() => useMageSelect(config));
+
+    act(() => {
+      result.current.initialLoad();
+    });
 
     await waitFor(() => {
       expect(result.current.state.initialized).toBe(true);
@@ -63,8 +79,31 @@ describe('useMageSelect', () => {
     });
 
     expect(result.current.state.search).toBe('new search');
-    expect(mockFetchPage).toHaveBeenCalledWith(1, 'new search', { searchFields: [] });
+    expect(mockFetchPage).toHaveBeenCalledWith(1, 'new search', expect.objectContaining({ searchFields: [], signal: expect.any(AbortSignal) }));
     
     vi.useRealTimers();
+  });
+
+  it('should return stable method references', () => {
+    const config = { fetchPage: mockFetchPage, fetchByIds: vi.fn(), getId: mockIdGetter };
+    const { result, rerender } = renderHook(({ cfg }) => useMageSelect(cfg), {
+      initialProps: { cfg: config as MageSelectEngineConfig<TestItem> | MageSelectEngine<TestItem> }
+    });
+
+    const initialMethods = {
+      loadMore: result.current.loadMore,
+      setSearch: result.current.setSearch,
+      setSearchFields: result.current.setSearchFields,
+      toggleSelection: result.current.toggleSelection,
+      setValue: result.current.setValue,
+    };
+
+    rerender({ cfg: { ...config } });
+
+    expect(result.current.loadMore).toBe(initialMethods.loadMore);
+    expect(result.current.setSearch).toBe(initialMethods.setSearch);
+    expect(result.current.setSearchFields).toBe(initialMethods.setSearchFields);
+    expect(result.current.toggleSelection).toBe(initialMethods.toggleSelection);
+    expect(result.current.setValue).toBe(initialMethods.setValue);
   });
 });

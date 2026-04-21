@@ -17,7 +17,7 @@ describe('useMageSelectController', () => {
   const wrapper = ({ children }: { children: React.ReactNode }) => {
     const methods = useForm({
       defaultValues: {
-        user: 'user-1' // Initial value is just an ID
+        user: 'user-1'
       }
     });
     return <FormProvider {...methods}>{children}</FormProvider>;
@@ -27,10 +27,7 @@ describe('useMageSelectController', () => {
     vi.clearAllMocks();
   });
 
-  it('should trigger automatic hydration on mount if default value exists', async () => {
-    const fetchedUser = { id: 'user-1', name: 'John Doe' };
-    mockFetchByIds.mockResolvedValue([fetchedUser]);
-
+  it('should initialize without side effects', async () => {
     const { result } = renderHook(
       () => useMageSelectController({
         name: 'user',
@@ -43,20 +40,12 @@ describe('useMageSelectController', () => {
       { wrapper }
     );
     
-    await waitFor(() => {
-      expect(result.current.state.initialized).toBe(true);
-    });
-
-    await waitFor(() => {
-      expect(mockFetchByIds).toHaveBeenCalledWith(['user-1']);
-    });
-
-    await waitFor(() => {
-      expect(result.current.state.selectedItems).toContainEqual(fetchedUser);
-    });
+    expect(result.current.state.initialized).toBe(false);
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockFetchByIds).not.toHaveBeenCalled();
   });
 
-  it('should sync engine selection back to React Hook Form', async () => {
+  it('should allow manual orchestration', async () => {
     const { result } = renderHook(
       () => useMageSelectController({
         name: 'user',
@@ -69,20 +58,10 @@ describe('useMageSelectController', () => {
       { wrapper }
     );
 
-    await waitFor(() => {
-      expect(result.current.state.initialized).toBe(true);
-    });
-
-    const newUser = { id: 'user-2', name: 'Jane' };
-    mockFetchByIds.mockResolvedValue([newUser]);
-    
     await act(async () => {
-      result.current.toggleSelection(newUser);
+      await result.current.initialLoad();
     });
 
-    await waitFor(() => {
-      expect(result.current.state.selectedItems).toContainEqual(newUser);
-    });
-    
+    expect(result.current.state.initialized).toBe(true);
   });
 });

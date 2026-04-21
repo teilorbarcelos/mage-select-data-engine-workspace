@@ -61,7 +61,7 @@ describe('MageSelectEngine', () => {
     const state = engine.getState();
     expect(state.items).toEqual(mockData.items);
     expect(state.isLoading).toBe(false);
-    expect(mockFetchPage).toHaveBeenCalledWith(1, '', { searchFields: [] });
+    expect(mockFetchPage).toHaveBeenCalledWith(1, '', expect.objectContaining({ searchFields: [], signal: expect.any(AbortSignal) }));
   });
 
   it('should reset page and items when searching', async () => {
@@ -79,7 +79,7 @@ describe('MageSelectEngine', () => {
     
     expect(engine.getState().search).toBe('test');
     expect(engine.getState().page).toBe(1);
-    expect(mockFetchPage).toHaveBeenCalledWith(1, 'test', { searchFields: [] });
+    expect(mockFetchPage).toHaveBeenCalledWith(1, 'test', expect.objectContaining({ searchFields: [], signal: expect.any(AbortSignal) }));
     vi.useRealTimers();
   });
 
@@ -94,7 +94,7 @@ describe('MageSelectEngine', () => {
     mockFetchPage.mockResolvedValue({ items: [], hasMore: false });
     await engine.initialLoad();
 
-    expect(mockFetchPage).toHaveBeenCalledWith(1, '', { searchFields: ['name', 'email'] });
+    expect(mockFetchPage).toHaveBeenCalledWith(1, '', expect.objectContaining({ searchFields: ['name', 'email'] }));
   });
 
   it('should load more items correctly', async () => {
@@ -162,5 +162,56 @@ describe('MageSelectEngine', () => {
     
     expect(engine.getState().error).toContain(errorMsg);
     expect(engine.getState().isHydrating).toBe(false);
+  });
+
+  it('should abort previous requests when searching rapidly', async () => {
+    vi.useFakeTimers();
+    const engine = new MageSelectEngine({
+      fetchPage: mockFetchPage,
+      fetchByIds: vi.fn(),
+      getId: mockIdGetter,
+    });
+
+    mockFetchPage.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve({ items: [], hasMore: false }), 100)));
+
+    engine.setSearch('test1');
+    await vi.advanceTimersByTimeAsync(300); // Trigger search
+    
+    engine.setSearch('test2');
+    await vi.advanceTimersByTimeAsync(300); // Trigger another search
+    
+    expect(mockFetchPage).toHaveBeenCalledTimes(2);
+    const firstCallSignal = mockFetchPage.mock.calls[0][2].signal;
+    expect(firstCallSignal.aborted).toBe(true);
+    
+    vi.useRealTimers();
+  });
+
+  it('should enforce cache limit', async () => {
+    const engine = new MageSelectEngine({
+      fetchPage: mockFetchPage,
+      fetchByIds: vi.fn(),
+      getId: mockIdGetter,
+      cacheLimit: 2,
+    });
+
+    mockFetchPage.mockResolvedValueOnce({ items: [{ id: '1' }, { id: '2' }], hasMore: true });
+    await engine.initialLoad();
+
+    expect(engine.getState().items).toHaveLength(2);
+
+    mockFetchPage.mockResolvedValueOnce({ items: [{ id: '3' }], hasMore: false });
+    await engine.loadMore();
+
+    const mockFetchByIds = vi.fn().mockResolvedValue([{ id: '1' }]);
+    engine.updateConfig({
+      fetchPage: mockFetchPage,
+      fetchByIds: mockFetchByIds,
+      getId: mockIdGetter,
+      cacheLimit: 2,
+    });
+
+    await engine.setValue(['1']);
+    expect(mockFetchByIds).toHaveBeenCalledWith(['1']);
   });
 });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { MageSelectEngine, MageSelectEngineConfig } from 'mage-select-data-engine';
 import { useMageSelect } from 'mage-select-data-react';
 import { MageSelectView } from './MageSelectView';
@@ -15,7 +15,7 @@ export interface VanillaMageSelectProps<T, V extends 'id' | 'object' = 'id'> {
 }
 
 /**
- * VanillaMageSelect - Direct Engine Wrapper
+ * VanillaMageSelect - Application level implementation
  */
 export function VanillaMageSelect<T, V extends 'id' | 'object' = 'id'>({
   engineConfig,
@@ -32,10 +32,15 @@ export function VanillaMageSelect<T, V extends 'id' | 'object' = 'id'>({
     loadMore, 
     toggleSelection, 
     setSearch,
-    engine
+    engine,
+    initialLoad,
   } = useMageSelect<T>(externalEngine || engineConfig);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    initialLoad();
+  }, [initialLoad]);
+
+  useEffect(() => {
     if (onSelectionChange) {
       if (valueType === 'id') {
         (onSelectionChange as (items: string[]) => void)(state.selectedItems.map(i => engine.getId(i)));
