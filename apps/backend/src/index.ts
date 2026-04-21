@@ -12,7 +12,12 @@ const prisma = new PrismaClient();
 app.get('/users', async (req, res) => {
   try {
     const result = await handlePrismaMageRequest(prisma.user, req.query, {
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
+      startPage: 0,
+      mappings: {
+        search: 'searchWord',
+        pageSize: 'size',
+      }
     });
     res.json(result);
   } catch (error) {
