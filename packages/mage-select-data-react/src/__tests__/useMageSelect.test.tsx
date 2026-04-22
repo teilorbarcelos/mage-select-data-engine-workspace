@@ -106,4 +106,51 @@ describe('useMageSelect', () => {
     expect(result.current.toggleSelection).toBe(initialMethods.toggleSelection);
     expect(result.current.setValue).toBe(initialMethods.setValue);
   });
+
+  it('should trigger loadPrevious correctly', async () => {
+    const config = { fetchPage: mockFetchPage, fetchByIds: vi.fn(), getId: mockIdGetter, startPage: 2 };
+    mockFetchPage.mockResolvedValue({ items: [], hasMore: false });
+    
+    const { result } = renderHook(() => useMageSelect(config));
+
+    act(() => {
+      result.current.initialLoad();
+    });
+
+    await waitFor(() => {
+      expect(result.current.state.hasPrevious).toBe(true);
+    });
+
+    act(() => {
+      result.current.loadPrevious();
+    });
+
+    expect(mockFetchPage).toHaveBeenCalledWith(1, '', expect.any(Object));
+  });
+
+  it('should auto-trigger initialLoad when autoInitialLoad is true', async () => {
+    const config = { fetchPage: mockFetchPage, fetchByIds: vi.fn(), getId: mockIdGetter };
+    mockFetchPage.mockResolvedValue({ items: [], hasMore: false });
+    
+    const { result } = renderHook(() => useMageSelect(config, { autoInitialLoad: true }));
+
+    await waitFor(() => {
+      expect(result.current.state.initialized).toBe(true);
+    });
+    expect(mockFetchPage).toHaveBeenCalled();
+  });
+
+  it('should trigger onSelectionChange when selectedItems change', async () => {
+    const config = { fetchPage: mockFetchPage, fetchByIds: vi.fn(), getId: mockIdGetter };
+    const onSelectionChange = vi.fn();
+    const { result } = renderHook(() => useMageSelect(config, { onSelectionChange }));
+
+    const item = { id: '1', name: 'Test' };
+    act(() => {
+      result.current.toggleSelection(item);
+    });
+
+    expect(onSelectionChange).toHaveBeenCalledWith([item]);
+    expect(result.current.state.selectedItems).toEqual([item]);
+  });
 });

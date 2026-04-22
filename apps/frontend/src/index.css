@@ -18,14 +18,14 @@ body {
 }
 
 .app-container {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
 }
 
 .forms-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 32px;
 }
 
@@ -58,6 +58,16 @@ body {
 .mage-select-container {
   position: relative;
   width: 100%;
+}
+
+.mage-select-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  z-index: 998;
 }
 
 .mage-select-trigger {
@@ -187,6 +197,7 @@ body {
   margin: 0;
   overflow-y: auto;
   max-height: 280px;
+  overflow-anchor: none;
 }
 
 .mage-select-list::-webkit-scrollbar {
