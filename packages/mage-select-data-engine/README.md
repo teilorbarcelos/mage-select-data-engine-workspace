@@ -2,6 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/mage-select-data-engine.svg?style=flat-square)](https://www.npmjs.com/package/mage-select-data-engine)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/teilorbarcelos/mage-select-data-engine-workspace/blob/main/LICENSE)
+[![demo](https://img.shields.io/badge/demo-live-green.svg?style=flat-square)](https://teilorbarcelos.github.io/mage-select-data-engine-demo/)
 
 > **"Stop loading 500+ items in your selects. Save your backend and your users' RAM."**
 
