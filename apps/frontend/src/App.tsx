@@ -1,5 +1,6 @@
+import { useQuery } from '@tanstack/react-query';
 import { MageSelectEngineConfig, createMageSelectEngine } from 'mage-select-data-engine';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { MageSelect } from './MageSelect';
 import { VanillaMageSelect } from './VanillaMageSelect';
@@ -36,6 +37,11 @@ const engineConfig: MageSelectEngineConfig<User> = {
     return res.json();
   },
   getId: (user) => user.id,
+};
+
+const memoryOptimizedConfig: MageSelectEngineConfig<User> = {
+  ...engineConfig,
+  biDirectionalRechargeable: true,
 };
 
 function CreateForm() {
@@ -258,11 +264,10 @@ function VanillaCreateForm() {
 }
 
 function VanillaEditForm({ initialIds }: { initialIds: string[] }) {
-  const [engine] = useState(() => createMageSelectEngine(engineConfig));
-
-  useEffect(() => {
-    engine.setValue(initialIds);
-  }, [initialIds, engine]);
+  const [engine] = useState(() => createMageSelectEngine({
+    ...engineConfig,
+    initialSelectedIds: initialIds
+  }));
 
   const handleManualUpdate = () => {
     const selectedIds = engine.getState().selectedItems.map(i => engine.getId(i));
@@ -298,19 +303,138 @@ function VanillaEditForm({ initialIds }: { initialIds: string[] }) {
   );
 }
 
+function MemoryOptimizedMultiForm() {
+  const { control, handleSubmit } = useForm<FormValues>({
+    defaultValues: { users: [] },
+  });
+
+  const onSubmit = (data: FormValues) => {
+    alert('✅ Memory Optimized Multi Success!\n' + JSON.stringify(data, null, 2));
+  };
+
+  return (
+    <div className="form-card memory-optimized">
+      <div className="form-header">
+        <h2>Bi-Directional Multi</h2>
+        <span className="badge info">Memory Optimized</span>
+      </div>
+      <p style={{ fontSize: 13, opacity: 0.8, marginBottom: 16 }}>
+        Starting at page 5 with <code>biDirectionalRechargeable</code> enabled. Scroll up and down!
+      </p>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="form-group">
+          <label>Assign Users</label>
+          <MageSelect
+            name="users"
+            control={control}
+            multiple
+            engineOrConfig={memoryOptimizedConfig}
+            placeholder="Scroll up or down..."
+            renderItem={(u) => (
+              <div>
+                <div style={{ color: '#fff' }}>{u.name}</div>
+                <div style={{ fontSize: 12, opacity: 0.7 }}>{u.email}</div>
+              </div>
+            )}
+            renderSelection={(items) => items.map((i) => i.name).join(', ')}
+          />
+        </div>
+        <button className="btn-submit" type="submit">Submit Form</button>
+      </form>
+    </div>
+  );
+}
+
+function MemoryOptimizedSingleForm() {
+  const { control, handleSubmit } = useForm<SimpleFormValues>({
+    defaultValues: { user: null },
+  });
+
+  const onSubmit = (data: SimpleFormValues) => {
+    alert('✅ Memory Optimized Single Success!\n' + JSON.stringify(data, null, 2));
+  };
+
+  return (
+    <div className="form-card memory-optimized">
+      <div className="form-header">
+        <h2>Bi-Directional Single</h2>
+        <span className="badge info">Memory Optimized</span>
+      </div>
+      <p style={{ fontSize: 13, opacity: 0.8, marginBottom: 16 }}>
+        Memory management enabled for single selection mode.
+      </p>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="form-group">
+          <label>Select User</label>
+          <MageSelect
+            name="user"
+            control={control}
+            multiple={false}
+            engineOrConfig={memoryOptimizedConfig}
+            placeholder="Search users..."
+            renderItem={(u) => (
+              <div>
+                <div style={{ color: '#fff' }}>{u.name}</div>
+                <div style={{ fontSize: 12, opacity: 0.7 }}>{u.email}</div>
+              </div>
+            )}
+            renderSelection={(items) => items[0]?.name || ''}
+          />
+        </div>
+        <button className="btn-submit" type="submit">Submit Form</button>
+      </form>
+    </div>
+  );
+}
+
+function MemoryOptimizedVanillaForm() {
+  const [selection, setSelection] = useState<string[]>([]);
+
+  return (
+    <div className="form-card vanilla memory-optimized">
+      <div className="form-header">
+        <h2>Bi-Directional Vanilla</h2>
+        <span className="badge info">Direct Engine</span>
+      </div>
+      <p style={{ fontSize: 13, opacity: 0.8, marginBottom: 16 }}>
+        Using <code>VanillaMageSelect</code> with memory optimization.
+      </p>
+      <div className="form-group" style={{ marginBottom: 20 }}>
+        <label>Select Participants</label>
+        <VanillaMageSelect
+          engineConfig={memoryOptimizedConfig}
+          multiple={true}
+          onSelectionChange={setSelection}
+          placeholder="Scroll and select..."
+          renderItem={(u) => (
+            <div>
+              <div style={{ color: '#fff' }}>{u.name}</div>
+              <div style={{ fontSize: 12, opacity: 0.7 }}>{u.email}</div>
+            </div>
+          )}
+          renderSelection={(items) => items.map(i => i.name).join(', ')}
+        />
+      </div>
+      <button type="button" className="btn-submit" onClick={() => alert(JSON.stringify(selection))}>Log Selection</button>
+    </div>
+  );
+}
+
 function App() {
-  const [demoIds, setDemoIds] = useState<string[] | null>(null);
   const [activeTab, setActiveTab] = useState<'multi' | 'single' | 'vanilla'>('multi');
 
-  useEffect(() => {
-    fetch('http://localhost:8888/users')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.items && data.items.length >= 3) {
-          setDemoIds([data.items[1].id, data.items[2].id]);
-        }
-      });
-  }, []);
+  const { data: demoIds } = useQuery({
+    queryKey: ['demo-users'],
+    queryFn: async () => {
+      const res = await fetch('http://localhost:8888/users');
+      const data = await res.json();
+      if (data.items && data.items.length >= 3) {
+        return [data.items[1].id, data.items[2].id];
+      }
+      return null;
+    },
+    staleTime: Infinity,
+  });
 
   return (
     <div className="app-container">
@@ -356,6 +480,7 @@ function App() {
                   <p>Hydrating data...</p>
                 </div>
               )}
+              <MemoryOptimizedMultiForm />
             </div>
           </section>
         )}
@@ -373,6 +498,7 @@ function App() {
                   <p>Hydrating data...</p>
                 </div>
               )}
+              <MemoryOptimizedSingleForm />
             </div>
           </section>
         )}
@@ -390,6 +516,7 @@ function App() {
                   <p>Loading IDs...</p>
                 </div>
               )}
+              <MemoryOptimizedVanillaForm />
             </div>
           </section>
         )}

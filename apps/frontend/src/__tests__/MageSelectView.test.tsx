@@ -1,7 +1,7 @@
 /// <reference types="@testing-library/jest-dom" />
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import { MageSelectEngineState } from 'mage-select-data-engine';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi, afterEach } from 'vitest';
 import { MageSelectView } from '../MageSelectView';
 
 interface TestItem {
@@ -20,7 +20,9 @@ describe('MageSelectView', () => {
     initialized: true,
     error: undefined,
     search: '',
-    searchFields: []
+    searchFields: [],
+    startPage: 1,
+    hasPrevious: false,
   };
 
   const defaultProps = {
@@ -28,8 +30,9 @@ describe('MageSelectView', () => {
     toggleSelection: vi.fn(),
     setSearch: vi.fn(),
     loadMore: vi.fn(),
+    loadPrevious: vi.fn(),
     renderItem: (item: TestItem) => item.name,
-    renderSelection: (items: TestItem[]) => items.map(i => i.name).join(', '),
+    renderSelection: (items: TestItem[]) => items.map((i) => i.name).join(', '),
     getId: (item: TestItem) => item.id,
     placeholder: 'Search...',
   };
@@ -38,83 +41,88 @@ describe('MageSelectView', () => {
     vi.clearAllMocks();
   });
 
-  it('should trigger loadMore automatically when sentinel becomes visible', async () => {
-    let observerCallback: IntersectionObserverCallback | undefined;
-    const mockObserver = {
-      observe: vi.fn(),
-      unobserve: vi.fn(),
-      disconnect: vi.fn(),
-    } as unknown as IntersectionObserver;
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
-    vi.spyOn(global, 'IntersectionObserver').mockImplementation((cb) => {
-      observerCallback = cb;
-      return mockObserver;
-    });
-
+  it('should trigger loadMore when scrolling to bottom', async () => {
     render(<MageSelectView {...defaultProps} />);
-    
+
     const input = screen.getByPlaceholderText('Search...');
     await act(async () => {
       input.focus();
     });
 
     const list = await screen.findByRole('list');
-    expect(list).toBeInTheDocument();
 
-    const callback = observerCallback;
-    if (callback) {
-      await act(async () => {
-        callback([{ isIntersecting: true }] as IntersectionObserverEntry[], mockObserver);
-      });
-    }
+    vi.spyOn(list, 'scrollHeight', 'get').mockReturnValue(1000);
+    vi.spyOn(list, 'clientHeight', 'get').mockReturnValue(300);
+    vi.spyOn(list, 'scrollTop', 'get').mockReturnValue(700);
+
+    fireEvent.scroll(list);
 
     expect(defaultProps.loadMore).toHaveBeenCalled();
   });
 
-  it('should not trigger loadMore if hasMore is false', async () => {
-    let observerCallback: IntersectionObserverCallback | undefined;
-    const mockObserver = {
-      observe: vi.fn(),
-      unobserve: vi.fn(),
-      disconnect: vi.fn(),
-    } as unknown as IntersectionObserver;
-
-    vi.spyOn(global, 'IntersectionObserver').mockImplementation((cb) => {
-      observerCallback = cb;
-      return mockObserver;
-    });
-
-    const propsWithNoMore = {
+  it('should trigger loadPrevious when scrolling to top', async () => {
+    const propsWithPrev = {
       ...defaultProps,
-      state: { ...mockState, hasMore: false }
+      state: { ...mockState, hasPrevious: true },
     };
 
-    render(<MageSelectView {...propsWithNoMore} />);
-    
+    render(<MageSelectView {...propsWithPrev} />);
+
     const input = screen.getByPlaceholderText('Search...');
     await act(async () => {
       input.focus();
     });
 
-    const callback = observerCallback;
-    if (callback) {
-      await act(async () => {
-        callback([{ isIntersecting: true }] as IntersectionObserverEntry[], mockObserver);
-      });
-    }
+    const list = await screen.findByRole('list');
 
-    expect(defaultProps.loadMore).not.toHaveBeenCalled();
+    vi.spyOn(list, 'scrollTop', 'get').mockReturnValue(0);
+
+    fireEvent.scroll(list);
+
+    expect(defaultProps.loadPrevious).toHaveBeenCalled();
+  });
+
+  it('should trigger loadMore automatically via kickstart if already at bottom', async () => {
+    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(300);
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(300);
+    vi.spyOn(HTMLElement.prototype, 'scrollTop', 'get').mockReturnValue(0);
+
+    const { rerender } = render(<MageSelectView {...defaultProps} />);
+
+    const input = screen.getByPlaceholderText('Search...');
+    await act(async () => {
+      input.focus();
+    });
+
+    const propsUpdated = {
+      ...defaultProps,
+      state: { 
+        ...mockState, 
+        items: [...mockState.items, { id: '2', name: 'Item 2' }],
+        isLoading: false 
+      },
+    };
+
+    await act(async () => {
+      rerender(<MageSelectView {...propsUpdated} />);
+    });
+
+    expect(defaultProps.loadMore).toHaveBeenCalled();
   });
 
   it('should render error message when state has an error', async () => {
     const errorMsg = 'Critical API Error';
     const propsWithError = {
       ...defaultProps,
-      state: { ...mockState, error: errorMsg }
+      state: { ...mockState, error: errorMsg },
     };
 
     render(<MageSelectView {...propsWithError} />);
-    
+
     expect(screen.getByText(errorMsg)).toBeInTheDocument();
     expect(screen.getByText(errorMsg)).toHaveClass('mage-select-error-message');
   });
